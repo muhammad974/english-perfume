@@ -11,11 +11,13 @@ const path = require('path');
 
 const URL_ = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-const REMOTE = !!(URL_ && TOKEN);
+const REDIS_URL = process.env.REDIS_URL;            // normal Redis address (Redis Cloud etc.): rediss://user:password@host:port
+const REST = !!(URL_ && TOKEN);                     // Upstash REST
+const REMOTE = REST || !!REDIS_URL;
 const P = 'ep:';                       // key prefix, so the database can be shared with other things
 
-/* ---------- Upstash Redis over its REST API ---------- */
-async function cmd(args) {
+/* ---------- Redis: Upstash REST API, or a normal Redis connection (REDIS_URL) ---------- */
+async function restCmd(args) {
   const r = await fetch(URL_, {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
@@ -25,6 +27,23 @@ async function cmd(args) {
   if (!r.ok || j.error) throw new Error('Redis: ' + (j.error || r.status));
   return j.result;
 }
+let client = null, connecting = null;
+async function tcpClient() {
+  if (client && !client.isOpen) { client = null; connecting = null; }
+  if (!client) {
+    const { createClient } = require('redis');
+    client = createClient({ url: REDIS_URL, socket: { connectTimeout: 8000, reconnectStrategy: false } });
+    client.on('error', () => {});                   // errors are reported by the command that hits them
+    connecting = client.connect().catch(e => { client = null; connecting = null; throw e; });
+  }
+  await connecting;
+  return client;
+}
+async function tcpCmd(args) {
+  try { return await (await tcpClient()).sendCommand(args.map(String)); }
+  catch (e) { throw new Error('Redis: ' + String((e && e.message) || e).slice(0, 150)); }
+}
+const cmd = REST ? restCmd : tcpCmd;
 const parse = v => { if (v == null) return null; try { return JSON.parse(v); } catch { return null; } };
 
 const remote = {
