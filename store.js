@@ -79,4 +79,15 @@ const local = {
   }
 };
 
-module.exports = Object.assign({ mode: REMOTE ? 'redis' : 'local' }, REMOTE ? remote : local);
+/* On Vercel the disk is read-only, so without Redis nothing can be saved. Say so clearly instead of a vague "Server error". */
+const NO_DB = !REMOTE && !!process.env.VERCEL;
+const missing = {};
+for (const n of ['get', 'set', 'del', 'incr', 'hget', 'hset', 'hdel', 'hall', 'hit']) {
+  missing[n] = async () => {
+    const e = new Error('The database is not connected. In Vercel open Storage, connect the Upstash Redis database to this project for Production, then Redeploy.');
+    e.code = 'NO_DB'; throw e;
+  };
+}
+const safeMsg = e => String((e && e.message) || e).replace(/https?:\/\/\S+/g, '[url]').slice(0, 200);
+
+module.exports = Object.assign({ mode: REMOTE ? 'redis' : NO_DB ? 'missing' : 'local', safeMsg }, NO_DB ? missing : REMOTE ? remote : local);
