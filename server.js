@@ -23,27 +23,35 @@ try {
 const PORT = Number(process.env.PORT) || 3000;
 const SESSION_MS = 12 * 60 * 60 * 1000;
 const STATUSES = ['new', 'confirmed', 'packed', 'shipped', 'delivered', 'cancelled'];
-const DATA = path.join(__dirname, 'data');
-fs.mkdirSync(DATA, { recursive: true });
+const store = require('./store'); // Upstash Redis on Vercel, a local JSON file on your own computer
 
-/* ---------- catalogue (prices are ALWAYS taken from here, never from the browser) ---------- */
-let CATALOG = JSON.parse(fs.readFileSync(path.join(__dirname, 'catalog.json'), 'utf8'));
-const PRODUCTS = new Map(CATALOG.products.map(p => [p.id, p]));
-let deliveryFee = CATALOG.config.deliveryFee, freeShippingOver = CATALOG.config.freeShippingOver;
-function persistCatalog(){ const tmp=path.join(__dirname,'catalog.json.tmp'); fs.writeFileSync(tmp, JSON.stringify(CATALOG,null,2)); fs.renameSync(tmp,path.join(__dirname,'catalog.json')); PRODUCTS.clear(); CATALOG.products.forEach(p=>PRODUCTS.set(Number(p.id),p)); deliveryFee=Number(CATALOG.config.deliveryFee)||0; freeShippingOver=Number(CATALOG.config.freeShippingOver)||0; }
-
-/* ---------- order storage (JSON file, written atomically) ---------- */
-const ORDERS_FILE = path.join(DATA, 'orders.json');
-let DB = { counter: 1000, orders: [] };
-try { DB = JSON.parse(fs.readFileSync(ORDERS_FILE, 'utf8')); } catch { /* first run */ }
-function save() {
-  const tmp = ORDERS_FILE + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(DB));
-  fs.renameSync(tmp, ORDERS_FILE);
+/* ---------- catalogue (lives in the store; seeded from catalog.json the first time) ---------- */
+let CATALOG = null, catAt = 0, deliveryFee = 0, freeShippingOver = 0;
+const PRODUCTS = new Map();
+function applyCatalog(c) {
+  CATALOG = c; catAt = Date.now();
+  PRODUCTS.clear(); c.products.forEach(p => PRODUCTS.set(Number(p.id), p));
+  deliveryFee = Number(c.config.deliveryFee) || 0; freeShippingOver = Number(c.config.freeShippingOver) || 0;
 }
+async function loadCatalog(fresh) {
+  if (!fresh && CATALOG && Date.now() - catAt < 10000) return CATALOG; // public pages reuse it for 10 s
+  let c = await store.get('catalog');
+  if (!c) { c = JSON.parse(JSON.stringify(require('./catalog.json'))); await store.set('catalog', c); }
+  applyCatalog(c); return c;
+}
+async function persistCatalog() { await store.set('catalog', CATALOG); applyCatalog(CATALOG); }
+
+/* ---------- orders (one record per order, so they scale and never overwrite each other) ---------- */
+const DB = { orders: [] };
+async function loadOrders() {
+  const list = await store.hall('orders');
+  list.sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
+  DB.orders = list;
+}
+async function saveOrder(o) { await store.hset('orders', o.id, o); await store.hset('byno', o.orderNo, o.id); }
+async function removeOrder(o) { await store.hdel('orders', o.id); await store.hdel('byno', o.orderNo); }
 
 /* ---------- admin account ---------- */
-const ADMIN_FILE = path.join(DATA, 'admin.json');
 const hashPw = (pw, salt = crypto.randomBytes(16).toString('hex')) =>
   salt + ':' + crypto.scryptSync(pw, salt, 64).toString('hex');
 const checkPw = (pw, stored) => {
@@ -52,11 +60,13 @@ const checkPw = (pw, stored) => {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 };
 let ADMIN = null;
-function admin() { // always read the file, so a password reset works even while the server is running
-  try { ADMIN = JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8')); } catch { /* not created yet */ }
-  return ADMIN;
+// Reads the account from the store every time, so a password change works on every server instance.
+// If none exists yet it is created from ADMIN_USER / ADMIN_PASSWORD (or interactively when run on your computer).
+async function getAdmin(interactive) {
+  let a = await store.get('admin');
+  if (!a && (process.env.ADMIN_PASSWORD || interactive)) a = await createAdmin();
+  ADMIN = a; return a;
 }
-admin();
 const ask = q => new Promise(resolve => {
   const rl = require('readline').createInterface({ input: process.stdin, output: process.stdout });
   rl.question(q, a => { rl.close(); resolve(a.trim()); });
@@ -76,7 +86,7 @@ async function createAdmin() {
   }
   if (!pw) { pw = crypto.randomBytes(6).toString('base64url'); how = 'random'; }
   const a = { user, hash: hashPw(pw) };
-  fs.writeFileSync(ADMIN_FILE, JSON.stringify(a));
+  await store.set('admin', a);
   console.log('\n  ==============================================');
   console.log('   ADMIN LOGIN');
   console.log('   Username :', user);
@@ -86,30 +96,41 @@ async function createAdmin() {
   return a;
 }
 
-/* ---------- sessions + rate limiting (in memory) ---------- */
-const sessions = new Map();
-const hits = new Map();
-function limit(key, max, windowMs) {
-  const now = Date.now();
-  const a = (hits.get(key) || []).filter(t => now - t < windowMs);
-  if (a.length >= max) { hits.set(key, a); return false; }
-  a.push(now); hits.set(key, a); return true;
+/* ---------- rate limiting + sessions ---------- */
+// Counters live in the store, so they work across Vercel's many short-lived server instances.
+async function limit(key, max, windowMs) {
+  try { return (await store.hit(key, windowMs)) <= max; } catch { return true; }
 }
-setInterval(() => {
-  const now = Date.now();
-  for (const [k, a] of hits) if (!a.some(t => now - t < 3600e3)) hits.delete(k);
-  for (const [k, s] of sessions) if (s.exp < now) sessions.delete(k);
-}, 600e3).unref();
 const getCookie = (req, n) => {
   const m = (req.headers.cookie || '').split(/;\s*/).find(c => c.startsWith(n + '='));
   return m ? decodeURIComponent(m.slice(n.length + 1)) : null;
 };
-function auth(req, res, next) {
+// The login cookie is signed (HMAC) instead of being kept in server memory, so it works on serverless.
+// The signing key includes the password hash, so changing the password signs everyone else out.
+const sessKey = A => (process.env.SESSION_SECRET || '') + ':' + A.hash;
+const sign = (payload, A) => crypto.createHmac('sha256', sessKey(A)).update(payload).digest('base64url');
+function setSession(req, res, A) {
+  const payload = Buffer.from(JSON.stringify({ u: A.user, exp: Date.now() + SESSION_MS })).toString('base64url');
+  res.cookie('ep_admin', payload + '.' + sign(payload, A), {
+    httpOnly: true, sameSite: 'strict', path: '/', maxAge: SESSION_MS,
+    secure: process.env.COOKIE_SECURE === '1' || req.headers['x-forwarded-proto'] === 'https'
+  });
+}
+async function auth(req, res, next) {
   const t = getCookie(req, 'ep_admin');
-  const s = t && sessions.get(t);
-  if (!s || s.exp < Date.now()) { if (t) sessions.delete(t); return res.status(401).json({ error: 'Please sign in' }); }
+  const A = t ? await getAdmin() : null;
+  let s = null;
+  if (A) {
+    const [p, sig] = t.split('.');
+    if (p && sig) {
+      const x = Buffer.from(sig), y = Buffer.from(sign(p, A));
+      if (x.length === y.length && crypto.timingSafeEqual(x, y)) { try { s = JSON.parse(Buffer.from(p, 'base64url').toString()); } catch { /* bad cookie */ } }
+    }
+  }
+  if (!s || !(s.exp > Date.now()) || s.u !== A.user) return res.status(401).json({ error: 'Please sign in' });
   if (req.method !== 'GET' && req.headers['x-requested-with'] !== 'ep-admin') return res.status(403).json({ error: 'Bad request' });
-  s.exp = Date.now() + SESSION_MS; req.session = s; req.token = t; next();
+  if (s.exp - Date.now() < SESSION_MS / 2) setSession(req, res, A); // keep an active admin signed in
+  req.session = { user: s.u }; req.token = t; next();
 }
 
 /* ---------- helpers ---------- */
@@ -150,12 +171,18 @@ async function notifyWhatsApp(o) {
   try { await sendWhatsApp(o); }
   catch (e) { console.error('WhatsApp notification failed:', e.message); }
 }
-// Never blocks or breaks the customer's order: runs in the background
-const notify = o => { Promise.allSettled([notifyTelegram(o), notifyWhatsApp(o)]); };
+// Never breaks the customer's order (failures are caught above). On Vercel it has to finish before we reply.
+const notify = o => Promise.allSettled([notifyTelegram(o), notifyWhatsApp(o)]);
 
 /* ---------- app ---------- */
 const app = express();
-if (process.env.TRUST_PROXY) app.set('trust proxy', 1);
+// Express 4 does not catch errors thrown inside async handlers; this forwards them to the error handler below.
+for (const m of ['get', 'post', 'put', 'patch', 'delete', 'use']) {
+  const orig = app[m].bind(app);
+  app[m] = (...a) => orig(...a.map(f => (typeof f === 'function' && f.constructor.name === 'AsyncFunction'
+    ? (req, res, next) => f(req, res, next).catch(next) : f)));
+}
+if (process.env.TRUST_PROXY || process.env.VERCEL) app.set('trust proxy', Number(process.env.TRUST_PROXY) > 1 ? Number(process.env.TRUST_PROXY) : 1); // so req.ip is the real visitor, not Vercel
 app.disable('x-powered-by');
 app.use((req, res, next) => {
   res.set({ 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin' });
@@ -176,15 +203,16 @@ app.use('/api/orders', (req, res, next) => {
 });
 
 /* ===== PUBLIC: current product catalogue ===== */
-app.get('/api/catalog', (req,res)=>res.set('Cache-Control','no-store').json({products:CATALOG.products,config:CATALOG.config}));
+app.get('/api/catalog', async (req,res)=>{ await loadCatalog(); res.set('Cache-Control','no-store').json({products:CATALOG.products,config:CATALOG.config}); });
 
 /* ===== PUBLIC: place an order ===== */
-app.post('/api/orders', (req, res) => {
+app.post('/api/orders', async (req, res) => {
   // generous cap on raw attempts (typos, retries); the stricter cap below counts only real orders
-  if (!limit('try:' + req.ip, 60, 3600e3)) return res.status(429).json({ error: 'Too many attempts. Please try again later or message us on WhatsApp.' });
+  if (!(await limit('try:' + req.ip, 60, 3600e3))) return res.status(429).json({ error: 'Too many attempts. Please try again later or message us on WhatsApp.' });
   const b = req.body || {};
   if (b.website) return res.status(201).json({ ok: true, order: { orderNo: 'EP-0000', shipping: {}, items: [], totals: { total: 0 } } }); // bot trap
 
+  await loadCatalog();
   const c = b.customer || {}, s = b.shipping || {};
   const customer = { name: str(c.name, 80), phone: str(c.phone, 20), email: str(c.email, 120) };
   const shipping = { state: str(s.state, 40), city: str(s.city, 60), address: str(s.address, 300) };
@@ -207,7 +235,7 @@ app.post('/api/orders', (req, res) => {
   }
   if (errors.length) return res.status(400).json({ error: errors[0], errors });
 
-  if (!limit('order:' + req.ip, 15, 3600e3)) return res.status(429).json({ error: 'Too many orders from this connection. Please try again later or message us on WhatsApp.' });
+  if (!(await limit('order:' + req.ip, 15, 3600e3))) return res.status(429).json({ error: 'Too many orders from this connection. Please try again later or message us on WhatsApp.' });
 
   const items = [...merged].map(([id, qty]) => {
     const p = PRODUCTS.get(id);
@@ -217,14 +245,13 @@ app.post('/api/orders', (req, res) => {
   const ship = subtotal >= freeShippingOver ? 0 : deliveryFee;
   const now = new Date().toISOString();
   const order = {
-    id: crypto.randomUUID(), orderNo: 'EP-' + (++DB.counter), createdAt: now, status: 'new',
+    id: crypto.randomUUID(), orderNo: 'EP-' + (1000 + await store.incr('counter')), createdAt: now, status: 'new',
     customer, shipping, notes, items, payment: { method: 'COD', status: 'unpaid' },
     totals: { subtotal, shipping: ship, total: round2(subtotal + ship) }, currency: 'MYR',
     adminNote: '', history: [{ status: 'new', at: now, by: 'customer' }]
   };
-  DB.orders.unshift(order);
-  save();
-  notify(order);
+  await saveOrder(order);
+  await notify(order);
   res.status(201).json({ ok: true, order: {
     orderNo: order.orderNo, createdAt: now, shipping: { city: shipping.city, state: shipping.state },
     items: items.map(i => ({ name: i.name, qty: i.qty })), totals: order.totals
@@ -233,8 +260,8 @@ app.post('/api/orders', (req, res) => {
 
 
 /* ===== PUBLIC: customer order tracking (order number + phone number) ===== */
-app.post('/api/track', (req, res) => {
-  if (!limit('track:' + req.ip, 20, 3600e3)) return res.status(429).json({ error: 'Too many lookups. Please try again in a while or message us on WhatsApp.' });
+app.post('/api/track', async (req, res) => {
+  if (!(await limit('track:' + req.ip, 20, 3600e3))) return res.status(429).json({ error: 'Too many lookups. Please try again in a while or message us on WhatsApp.' });
   const b = req.body || {};
   const raw = str(b.orderNo, 20).toUpperCase().replace(/\s+/g, '');
   const orderNo = /^\d+$/.test(raw) ? 'EP-' + raw : raw;
@@ -242,7 +269,8 @@ app.post('/api/track', (req, res) => {
   const notFound = () => res.status(404).json({ error: "We couldn't find an order with those details. Check the order number and the phone number you used at checkout." });
   if (!/^EP-\d{1,8}$/.test(orderNo) || digits.length < 8) return notFound();
   const tail = v => String(v || '').replace(/\D/g, '').slice(-8);
-  const o = DB.orders.find(x => x.orderNo === orderNo);
+  const oid = await store.hget('byno', orderNo);
+  const o = oid ? await store.hget('orders', oid) : null;
   if (!o || tail(o.customer && o.customer.phone) !== tail(digits)) return notFound();
   // only share what the customer needs: no email, no full address, no admin notes
   res.set('Cache-Control', 'no-store').json({ order: {
@@ -256,14 +284,14 @@ app.post('/api/track', (req, res) => {
 });
 
 /* ===== ADMIN PRODUCT MANAGEMENT (authenticated) ===== */
-app.get('/api/admin/products', auth, (req,res)=>res.json({products:CATALOG.products, config:CATALOG.config}));
-app.post('/api/admin/products', auth, (req,res)=>{
+app.get('/api/admin/products', auth, async (req,res)=>{ await loadCatalog(true); res.json({products:CATALOG.products, config:CATALOG.config}); });
+app.post('/api/admin/products', auth, async (req,res)=>{await loadCatalog(true);
   const b=req.body||{}; const name=str(b.name,120); const price=Number(b.price), id=Math.max(0,...CATALOG.products.map(p=>Number(p.id)||0))+1;
   if(name.length<2 || !Number.isFinite(price) || price<0) return res.status(400).json({error:'Product name and valid price are required.'});
   const p={id,name,price,cat:['men','women','unisex'].includes(b.cat)?b.cat:'unisex',label:str(b.label,100),img:str(b.img,2000),was:Number(b.was)||0,active:b.active!==false,stock:Math.max(0,Math.floor(Number(b.stock)||0)),sku:str(b.sku,40),description:str(b.description,1000)};
-  CATALOG.products.push(p); persistCatalog(); res.status(201).json({product:p});
+  CATALOG.products.push(p); await persistCatalog(); res.status(201).json({product:p});
 });
-app.put('/api/admin/products/:id', auth, (req,res)=>{
+app.put('/api/admin/products/:id', auth, async (req,res)=>{await loadCatalog(true);
   const p=PRODUCTS.get(Number(req.params.id)); if(!p) return res.status(404).json({error:'Product not found'}); const b=req.body||{};
   if(b.name!==undefined){const n=str(b.name,120); if(n.length<2)return res.status(400).json({error:'Name is required'});p.name=n;}
   if(b.price!==undefined){const v=Number(b.price);if(!Number.isFinite(v)||v<0)return res.status(400).json({error:'Invalid price'});p.price=v;}
@@ -271,34 +299,35 @@ app.put('/api/admin/products/:id', auth, (req,res)=>{
   if(b.was!==undefined)p.was=Math.max(0,Number(b.was)||0);
   for(const k of ['label','img','sku','description'])if(b[k]!==undefined)p[k]=str(b[k], k==='img'?2000:k==='description'?1000:120);
   if(b.active!==undefined)p.active=!!b.active;if(b.stock!==undefined)p.stock=Math.max(0,Math.floor(Number(b.stock)||0));
-  persistCatalog();res.json({product:p});
+  await persistCatalog();res.json({product:p});
 });
-app.delete('/api/admin/products/:id', auth, (req,res)=>{const id=Number(req.params.id);if(!PRODUCTS.has(id))return res.status(404).json({error:'Product not found'});CATALOG.products=CATALOG.products.filter(p=>Number(p.id)!==id);persistCatalog();res.json({ok:true});});
-app.patch('/api/admin/products/:id/stock', auth, (req,res)=>{const p=PRODUCTS.get(Number(req.params.id));if(!p)return res.status(404).json({error:'Product not found'});p.stock=Math.max(0,Math.floor(Number(req.body.stock)||0));persistCatalog();res.json({product:p});});
-app.patch('/api/admin/products/:id/active', auth, (req,res)=>{const p=PRODUCTS.get(Number(req.params.id));if(!p)return res.status(404).json({error:'Product not found'});p.active=!!req.body.active;persistCatalog();res.json({product:p});});
-app.post('/api/admin/product-image', auth, (req,res)=>{
+app.delete('/api/admin/products/:id', auth, async (req,res)=>{await loadCatalog(true);const id=Number(req.params.id);if(!PRODUCTS.has(id))return res.status(404).json({error:'Product not found'});CATALOG.products=CATALOG.products.filter(p=>Number(p.id)!==id);await persistCatalog();res.json({ok:true});});
+app.patch('/api/admin/products/:id/stock', auth, async (req,res)=>{await loadCatalog(true);const p=PRODUCTS.get(Number(req.params.id));if(!p)return res.status(404).json({error:'Product not found'});p.stock=Math.max(0,Math.floor(Number(req.body.stock)||0));await persistCatalog();res.json({product:p});});
+app.patch('/api/admin/products/:id/active', auth, async (req,res)=>{await loadCatalog(true);const p=PRODUCTS.get(Number(req.params.id));if(!p)return res.status(404).json({error:'Product not found'});p.active=!!req.body.active;await persistCatalog();res.json({product:p});});
+app.post('/api/admin/product-image', auth, async (req,res)=>{
  const {data,filename}=req.body||{}; if(typeof data!=='string'||!data.startsWith('data:image/'))return res.status(400).json({error:'Invalid image'});
  const m=data.match(/^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)$/);if(!m)return res.status(400).json({error:'Use PNG, JPEG, or WebP images'});
- const ext=m[1]==='jpeg'?'jpg':m[1], buf=Buffer.from(m[2],'base64');if(buf.length>5*1024*1024)return res.status(400).json({error:'Image must be under 5 MB'});
- const dir=path.join(__dirname,'public','images','products');fs.mkdirSync(dir,{recursive:true});const safe=(String(filename||'product').replace(/[^a-z0-9_-]/gi,'').slice(0,40)||'product')+'-'+crypto.randomBytes(4).toString('hex')+'.'+ext;fs.writeFileSync(path.join(dir,safe),buf);res.json({url:'/images/products/'+safe});
+ const ext=m[1]==='jpeg'?'jpg':m[1], buf=Buffer.from(m[2],'base64');if(buf.length>700*1024)return res.status(400).json({error:'Image must be under 700 KB. Use a smaller photo.'});
+ const safe=(String(filename||'product').replace(/\.[a-z0-9]+$/i,'').replace(/[^a-z0-9_-]/gi,'').slice(0,40)||'product')+'-'+crypto.randomBytes(4).toString('hex')+'.'+ext;
+ await store.set('img:'+safe,{t:'image/'+m[1],d:m[2]});res.json({url:'/images/products/'+safe});
 });
 
 /* ===== ADMIN ===== */
-app.post('/api/admin/login', (req, res) => {
-  if (!limit('login:' + req.ip, 6, 15 * 60e3)) return res.status(429).json({ error: 'Too many attempts. Try again in 15 minutes.' });
+app.post('/api/admin/login', async (req, res) => {
+  if (!(await limit('login:' + req.ip, 6, 15 * 60e3))) return res.status(429).json({ error: 'Too many attempts. Try again in 15 minutes.' });
   const { user, password } = req.body || {};
-  const A = admin();
+  const A = await getAdmin();
+  if (!A) return res.status(503).json({ error: 'Admin is not set up yet. Add ADMIN_PASSWORD in the Vercel environment variables and redeploy.' });
   const pwOk = checkPw(typeof password === 'string' ? password : '', A.hash);
   if (!(typeof user === 'string' && user === A.user && pwOk)) return res.status(401).json({ error: 'Wrong username or password.' });
-  const t = crypto.randomBytes(32).toString('hex');
-  sessions.set(t, { exp: Date.now() + SESSION_MS, user });
-  res.cookie('ep_admin', t, { httpOnly: true, sameSite: 'strict', secure: process.env.COOKIE_SECURE === '1', maxAge: SESSION_MS, path: '/' });
+  setSession(req, res, A);
   res.json({ ok: true, user });
 });
-app.post('/api/admin/logout', auth, (req, res) => { sessions.delete(req.token); res.clearCookie('ep_admin', { path: '/' }); res.json({ ok: true }); });
+app.post('/api/admin/logout', auth, (req, res) => { res.clearCookie('ep_admin', { path: '/' }); res.json({ ok: true }); });
 app.get('/api/admin/me', auth, (req, res) => res.json({ user: req.session.user }));
 
-app.get('/api/admin/orders', auth, (req, res) => {
+app.get('/api/admin/orders', auth, async (req, res) => {
+  await loadOrders();
   let list = DB.orders;
   const { status, q } = req.query;
   if (status && STATUSES.includes(status)) list = list.filter(o => o.status === status);
@@ -309,7 +338,8 @@ app.get('/api/admin/orders', auth, (req, res) => {
   res.json({ orders: list.slice(0, 500), counts: counts(), stats: stats() });
 });
 
-app.patch('/api/admin/orders/:id', auth, (req, res) => {
+app.patch('/api/admin/orders/:id', auth, async (req, res) => {
+  await loadOrders();
   const o = DB.orders.find(x => x.id === req.params.id);
   if (!o) return res.status(404).json({ error: 'Order not found' });
   const { status, adminNote } = req.body || {};
@@ -323,19 +353,21 @@ app.patch('/api/admin/orders/:id', auth, (req, res) => {
   }
   if (typeof adminNote === 'string') o.adminNote = adminNote.slice(0, 1000);
   o.updatedAt = new Date().toISOString();
-  save();
+  await saveOrder(o);
   res.json({ order: o, counts: counts(), stats: stats() });
 });
 
-app.delete('/api/admin/orders/:id', auth, (req, res) => {
+app.delete('/api/admin/orders/:id', auth, async (req, res) => {
+  await loadOrders();
   const i = DB.orders.findIndex(x => x.id === req.params.id);
   if (i < 0) return res.status(404).json({ error: 'Order not found' });
   if (DB.orders[i].status !== 'cancelled') return res.status(400).json({ error: 'Only cancelled orders can be deleted.' });
-  DB.orders.splice(i, 1); save();
+  const [gone] = DB.orders.splice(i, 1); await removeOrder(gone);
   res.json({ ok: true, counts: counts(), stats: stats() });
 });
 
-app.get('/api/admin/orders.csv', auth, (req, res) => {
+app.get('/api/admin/orders.csv', auth, async (req, res) => {
+  await loadOrders();
   const cell = v => { v = String(v ?? ''); if (/^[=+\-@\t\r]/.test(v)) v = "'" + v; return '"' + v.replace(/"/g, '""') + '"'; };
   const head = ['Order No', 'Date', 'Status', 'Name', 'Phone', 'Email', 'State', 'City', 'Address', 'Items', 'Subtotal', 'Delivery', 'Total', 'Payment', 'Customer notes', 'Admin note'];
   const rows = DB.orders.map(o => [o.orderNo, o.createdAt, o.status, o.customer.name, o.customer.phone, o.customer.email, o.shipping.state, o.shipping.city, o.shipping.address,
@@ -344,20 +376,34 @@ app.get('/api/admin/orders.csv', auth, (req, res) => {
   res.send('\ufeff' + [head.map(cell).join(','), ...rows].join('\r\n'));
 });
 
-app.post('/api/admin/password', auth, (req, res) => {
+app.post('/api/admin/password', auth, async (req, res) => {
   const { current, next } = req.body || {};
-  const A = admin();
+  const A = await getAdmin();
   if (!checkPw(typeof current === 'string' ? current : '', A.hash)) return res.status(400).json({ error: 'Current password is wrong.' });
   if (typeof next !== 'string' || next.length < 8) return res.status(400).json({ error: 'New password must be at least 8 characters.' });
   A.hash = hashPw(next);
-  fs.writeFileSync(ADMIN_FILE, JSON.stringify(A));
-  for (const k of sessions.keys()) if (k !== req.token) sessions.delete(k);
+  await store.set('admin', A);
+  setSession(req, res, A); // everyone else is signed out; this browser stays signed in
   res.json({ ok: true });
 });
 
 /* ===== static files ===== */
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin', 'index.html')));
 app.use('/admin', express.static(path.join(__dirname, 'admin'), { index: false })); // admin.css + admin.js
+// product photos uploaded from the admin panel are kept in the store (the others are plain files in /images/products)
+app.get('/images/products/:name', async (req, res, next) => {
+  if (!/^[a-z0-9_-]+\.(jpg|png|webp)$/i.test(req.params.name)) return next();
+  const im = await store.get('img:' + req.params.name);
+  if (!im) return next();
+  res.set({ 'Content-Type': im.t, 'Cache-Control': 'public, max-age=31536000, immutable' });
+  res.send(Buffer.from(im.d, 'base64'));
+});
+// Vercel Cron calls this once a day so the free database never goes idle
+app.get('/api/keepalive', async (req, res) => {
+  if (process.env.CRON_SECRET && req.headers.authorization !== 'Bearer ' + process.env.CRON_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+  await store.set('keepalive', { at: new Date().toISOString() });
+  res.json({ ok: true });
+});
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
@@ -365,12 +411,16 @@ app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
   res.status(err.status && err.status < 500 ? err.status : 500).json({ error: err.status && err.status < 500 ? 'Invalid request' : 'Server error' });
 });
 
-(async () => {
-  if (!admin()) ADMIN = await createAdmin();
-  app.listen(PORT, () => {
-    console.log(`\n  English Perfume is running`);
-    console.log(`  Website : http://localhost:${PORT}`);
-    console.log(`  Admin   : http://localhost:${PORT}/admin`);
-    console.log(`  Login   : username "${ADMIN.user}". Forgot the password? Close this window and run reset-admin-password.bat\n`);
-  });
-})();
+// On your own computer: `npm start`. On Vercel the file is imported by api/index.js and `app` handles each request.
+if (require.main === module) {
+  (async () => {
+    const A = await getAdmin(true);
+    app.listen(PORT, () => {
+      console.log(`\n  English Perfume is running`);
+      console.log(`  Website : http://localhost:${PORT}`);
+      console.log(`  Admin   : http://localhost:${PORT}/admin`);
+      console.log(`  Login   : username "${A.user}". Forgot the password? Close this window and run reset-admin-password.bat\n`);
+    });
+  })();
+}
+module.exports = app;

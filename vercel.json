@@ -1,0 +1,16 @@
+{
+  "framework": null,
+  "outputDirectory": "public",
+  "functions": {
+    "api/index.js": { "includeFiles": "admin/**" }
+  },
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api" },
+    { "source": "/admin", "destination": "/api" },
+    { "source": "/admin/:path*", "destination": "/api" },
+    { "source": "/images/products/:name", "destination": "/api" }
+  ],
+  "crons": [
+    { "path": "/api/keepalive", "schedule": "0 3 * * *" }
+  ]
+}
