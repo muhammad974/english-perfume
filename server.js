@@ -433,7 +433,7 @@ app.get('/api/health', async (req, res) => {
       SESSION_SECRET: has('SESSION_SECRET'), ADMIN_RECOVERY_KEY: has('ADMIN_RECOVERY_KEY')
     }
   };
-  try { await store.set('health', { at: new Date().toISOString() }); out.database = 'working'; out.adminAccountCreated = !!(await store.get('admin')); }
+  try { await store.set('health', { at: new Date().toISOString() }); out.database = 'working'; out.adminAccountCreated = !!(await store.get('admin')); const ol = await store.hall('orders'); out.ordersInDatabase = ol.length; out.lastOrderNo = ol.map(o => o.orderNo).sort().pop() || null; }
   catch (e) { out.database = 'NOT working: ' + store.safeMsg(e); }
   res.set('Cache-Control', 'no-store').json(out);
 });
