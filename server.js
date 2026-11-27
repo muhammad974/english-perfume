@@ -65,6 +65,13 @@ let ADMIN = null;
 async function getAdmin(interactive) {
   let a = await store.get('admin');
   if (!a && (process.env.ADMIN_PASSWORD || interactive)) a = await createAdmin();
+  // ADMIN_SYNC=1: force the saved login to match ADMIN_USER / ADMIN_PASSWORD from the environment (use once, then remove it)
+  if (process.env.ADMIN_SYNC === '1' && process.env.ADMIN_PASSWORD) {
+    const u = process.env.ADMIN_USER || 'admin';
+    let same = false;
+    try { same = !!a && a.user === u && checkPw(process.env.ADMIN_PASSWORD, a.hash); } catch {}
+    if (!same) { a = { user: u, hash: hashPw(process.env.ADMIN_PASSWORD) }; await store.set('admin', a); }
+  }
   ADMIN = a; return a;
 }
 const ask = q => new Promise(resolve => {
