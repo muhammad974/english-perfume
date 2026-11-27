@@ -326,6 +326,21 @@ app.post('/api/admin/login', async (req, res) => {
 app.post('/api/admin/logout', auth, (req, res) => { res.clearCookie('ep_admin', { path: '/' }); res.json({ ok: true }); });
 app.get('/api/admin/me', auth, (req, res) => res.json({ user: req.session.user }));
 
+// Forgot password: the owner types the recovery key (ADMIN_RECOVERY_KEY, set in the Vercel environment variables) plus a new password
+app.post('/api/admin/reset', async (req, res) => {
+  if (!(await limit('reset:' + req.ip, 5, 15 * 60e3))) return res.status(429).json({ error: 'Too many attempts. Try again in 15 minutes.' });
+  const rk = process.env.ADMIN_RECOVERY_KEY;
+  if (!rk) return res.status(503).json({ error: 'Password recovery is not set up. Add ADMIN_RECOVERY_KEY in the Vercel environment variables and redeploy.' });
+  const { key, next } = req.body || {};
+  const h = v => crypto.createHash('sha256').update(String(v)).digest();
+  if (typeof key !== 'string' || !crypto.timingSafeEqual(h(key), h(rk))) return res.status(401).json({ error: 'Wrong recovery key.' });
+  if (typeof next !== 'string' || next.length < 8) return res.status(400).json({ error: 'New password must be at least 8 characters.' });
+  const A = (await getAdmin()) || { user: process.env.ADMIN_USER || 'admin' };
+  A.hash = hashPw(next);
+  await store.set('admin', A); // old login cookies stop working automatically
+  res.json({ ok: true, user: A.user });
+});
+
 app.get('/api/admin/orders', auth, async (req, res) => {
   await loadOrders();
   let list = DB.orders;

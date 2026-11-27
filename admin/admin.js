@@ -21,3 +21,13 @@ $('#exportBtn').onclick=async()=>{try{const r=await fetch(API+'/orders.csv',{cre
 $('#pwBtn').onclick=async()=>{const cur=prompt('Current password'),next=prompt('New password (minimum 8 characters)');if(cur===null||next===null)return;try{await api('/password',{method:'POST',body:JSON.stringify({current:cur,next})});toast('Password changed')}catch(e){toast(e.message)}};
 $('#logoutBtn').onclick=async()=>{try{await api('/logout',{method:'POST',body:'{}'})}catch{}showLogin()};$('#loginForm').onsubmit=async e=>{e.preventDefault();try{await fetch('/api/admin/login',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({user:$('#username').value,password:$('#password').value})}).then(async r=>{const j=await r.json();if(!r.ok)throw Error(j.error||'Login failed')});showApp()}catch(err){toast(err.message)}};
 (async()=>{try{await api('/me');showApp()}catch{showLogin()}})();
+
+/* show/hide password + forgot password */
+document.querySelectorAll('[data-eye]').forEach(b=>b.onclick=()=>{const i=b.parentElement.querySelector('input'),show=i.type==='password';i.type=show?'text':'password';b.classList.toggle('on',show);b.setAttribute('aria-label',show?'Hide password':'Show password');b.title=show?'Hide password':'Show password'});
+function loginView(forgot){$('#loginForm').classList.toggle('hidden',forgot);$('#forgotForm').classList.toggle('hidden',!forgot);const m=$('#forgotMsg');if(!forgot||!m.classList.contains('ok')){m.textContent='';m.className='msg'}}
+$('#forgotLink').onclick=()=>loginView(true);
+$('#backLink').onclick=()=>loginView(false);
+$('#forgotForm').onsubmit=async e=>{e.preventDefault();const m=$('#forgotMsg'),btn=e.target.querySelector('button[type=submit]');m.className='msg';m.textContent='';btn.disabled=true;
+ try{const r=await fetch('/api/admin/reset',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:$('#recKey').value,next:$('#newPw').value})});const j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.error||'Could not reset the password');
+  $('#recKey').value='';$('#newPw').value='';loginView(false);$('#password').value='';$('#password').focus();toast('Password changed. Please sign in with the new password.')}
+ catch(err){m.textContent=err.message;m.className='msg err'}finally{btn.disabled=false}};

@@ -16,7 +16,8 @@ Ye poora folder ek GitHub repo banega aur ek hi Vercel project mein jayega.
 3. Environment Variables (Deploy se pehle) mein ye daalein:
    - `ADMIN_PASSWORD` = apna strong password (kam az kam 8 characters). **Zaroori.**
    - `ADMIN_USER` = admin (chahein to koi aur naam)
-   - `SESSION_SECRET` = koi lamba random text, jaise 40 keys ka
+   - `SESSION_SECRET` = koi lamba random text
+   - `ADMIN_RECOVERY_KEY` = ek aur lamba secret, admin login page ke "Forgot password?" ke liye. Ise kahin likh kar rakhein.
    - Optional: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `WA_OWNER_NUMBER`, `CALLMEBOT_APIKEY`
 4. Deploy.
 
@@ -27,7 +28,7 @@ Ye poora folder ek GitHub repo banega aur ek hi Vercel project mein jayega.
 
 ## 4. Test
 1. `https://PROJECT.vercel.app/api/catalog` kholein: products ki list (JSON) aani chahiye.
-2. `https://PROJECT.vercel.app/admin` par admin + ADMIN_PASSWORD se login karein.
+2. `https://PROJECT.vercel.app/admin` par admin + ADMIN_PASSWORD se login karein. Password ke saath wali aankh par click karke password dekh sakte hain.
 3. Website par ek test order dein; admin mein dikhna chahiye. `track.html` par order number + phone se tracking dekhein.
 4. Admin mein product ki photo upload karke dekhein (photo khud chhoti ho jati hai).
 
@@ -39,9 +40,14 @@ Ye poora folder ek GitHub repo banega aur ek hi Vercel project mein jayega.
    `{ "source": "/", "has": [{ "type": "host", "value": "admin.apkadomain.com" }], "destination": "/api" }`
    Phir `/admin` wala page us domain ke root par khulega.
 
+## Password bhool jayein
+1. Admin login page par **Forgot password?** par click karein.
+2. Apni `ADMIN_RECOVERY_KEY` (Vercel, Settings, Environment Variables mein dekh sakte hain) aur naya password (kam az kam 8 characters) likhein.
+3. Reset dabayein, phir naye password se sign in karein.
+4. Agar `ADMIN_RECOVERY_KEY` set hi nahi kiya: Vercel mein wo variable add karke Redeploy karein, ya Upstash console mein key `ep:admin` delete karein (agle login par `ADMIN_PASSWORD` se naya ban jayega).
+
 ## Yaad rakhein
 - Vercel Hobby (free) plan sirf personal/non-commercial use ke liye hai. Asal sales shuru karte waqt Pro plan chahiye.
-- Admin password bhool gaye: Upstash console mein key `ep:admin` delete karein, agle login par `ADMIN_PASSWORD` se naya ban jayega.
 - `catalog.json` sirf pehli dafa database mein jata hai. Baad ki tabdeeliyan admin panel se karein.
 - Free Upstash database kuch din idle rahe to archive ho sakta hai. Is liye roz ek chhota keepalive cron (vercel.json mein) laga hai.
 - Photos ka size 700 KB se chhota hona chahiye. Admin panel upload se pehle khud chhota kar deta hai.
