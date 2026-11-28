@@ -93,13 +93,106 @@
       "label": "Fresh Spicy · Citrus · Amber",
       "img": "/images/products/dior-sauvage-edp-100ml.jpg",
       "description": "Dior Sauvage Eau de Parfum for men, 100ml. Fresh and spicy with bergamot, Sichuan pepper, lavender, star anise, vanilla and ambroxan. Strong sillage and around 8 hours of longevity. 100% authentic.",
-      "active": true,
-      "images": [
-        "/images/products/dior-sauvage-edp-100ml.jpg",
-        "/images/products/11-2.jpg",
-        "/images/products/11-3.jpg",
-        "/images/products/11-4.jpg"
-      ]
+      "active": true
+    },
+    {
+      "id": 12,
+      "name": "Jean Paul Gaultier Le Male Elixir 100ml",
+      "price": 115,
+      "was": 480,
+      "cat": "men",
+      "label": "Amber · Vanilla · Lavender",
+      "img": "/images/products/jpg-le-male-elixir-100ml.jpg",
+      "description": "Jean Paul Gaultier Le Male Elixir 100ml for men. A rich, warm and intense fragrance with lavender, mint, vanilla, honey and tonka. 100% authentic.",
+      "active": true
+    },
+    {
+      "id": 13,
+      "name": "Dior Fahrenheit Eau de Toilette 100ml",
+      "price": 115,
+      "was": 480,
+      "cat": "men",
+      "label": "Woody · Leather · Violet",
+      "img": "/images/products/dior-fahrenheit-edt-100ml.jpg",
+      "description": "Dior Fahrenheit Eau de Toilette for men, 100ml. 100% authentic.",
+      "active": true
+    },
+    {
+      "id": 14,
+      "name": "Dior J'adore EDP For Women 100ml",
+      "price": 125,
+      "was": 520,
+      "cat": "women",
+      "label": "Floral · Fruity · Jasmine",
+      "img": "/images/products/dior-jadore-edp-100ml.jpg",
+      "description": "Dior J'adore Eau de Parfum for women, 100ml. 100% authentic.",
+      "active": true
+    },
+    {
+      "id": 15,
+      "name": "YSL Libre EDP Intense 90ml",
+      "price": 113,
+      "was": 580,
+      "cat": "women",
+      "label": "Floral · Lavender · Vanilla",
+      "img": "/images/products/ysl-libre-edp-intense-90ml.jpg",
+      "description": "YSL Libre Eau de Parfum Intense for women, 90ml. 100% authentic.",
+      "active": true
+    },
+    {
+      "id": 16,
+      "name": "Dior Sauvage Elixir EDP 100ml",
+      "price": 122,
+      "was": 480,
+      "cat": "men",
+      "label": "Spicy · Woody · Amber",
+      "img": "/images/products/dior-sauvage-elixir-100ml.jpg",
+      "description": "Dior Sauvage Elixir Eau de Parfum for men, 100ml. 100% authentic.",
+      "active": true
+    },
+    {
+      "id": 17,
+      "name": "Hugo Boss Hugo Man EDT 150ml",
+      "price": 125,
+      "was": 480,
+      "cat": "men",
+      "label": "Fresh · Green · Aromatic",
+      "img": "/images/products/hugo-boss-hugo-man-edt-150ml.jpg",
+      "description": "Hugo Boss Hugo Man Eau de Toilette for men, 150ml. 100% authentic.",
+      "active": true
+    },
+    {
+      "id": 18,
+      "name": "Bvlgari Man In Black EDP 100ml",
+      "price": 115,
+      "was": 520,
+      "cat": "men",
+      "label": "Spicy · Leather · Tonka",
+      "img": "/images/products/bvlgari-man-in-black-edp-100ml.jpg",
+      "description": "Bvlgari Man In Black Eau de Parfum for men, 100ml. 100% authentic.",
+      "active": true
+    },
+    {
+      "id": 19,
+      "name": "Tom Ford Oud Wood EDP 100ml",
+      "price": 117,
+      "was": 450,
+      "cat": "unisex",
+      "label": "Woody · Oud · Spicy",
+      "img": "/images/products/tom-ford-oud-wood-edp-100ml.jpg",
+      "description": "Tom Ford Oud Wood Eau de Parfum, unisex, 100ml. 100% authentic.",
+      "active": true
+    },
+    {
+      "id": 20,
+      "name": "Louis Vuitton Imagination EDP 100ml",
+      "price": 126,
+      "was": 580,
+      "cat": "men",
+      "label": "Citrus · Fresh · Amber",
+      "img": "/images/products/louis-vuitton-imagination-edp-100ml.jpg",
+      "description": "Louis Vuitton Imagination Eau de Parfum for men, 100ml. 100% authentic.",
+      "active": true
     }
   ]
 }
