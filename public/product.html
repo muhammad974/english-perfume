@@ -284,6 +284,7 @@ footer.ft{position:relative;overflow:hidden;background:linear-gradient(180deg,va
 /* layout */
 .pd{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);gap:clamp(28px,5vw,72px);padding:14px 0 70px;align-items:start}
 /* gallery */
+.gal.single{grid-template-columns:1fr}
 .gal{display:grid;grid-template-columns:86px 1fr;gap:14px;position:sticky;top:90px}
 .thumbs{display:flex;flex-direction:column;gap:12px}
 .th{width:86px;aspect-ratio:4/5;border-radius:12px;overflow:hidden;border:1.5px solid transparent;background:var(--linen);opacity:.7;transition:all .3s var(--ease);padding:0}
@@ -555,8 +556,8 @@ function fallback(h,v){
   return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
 }
 window.imgFail=el=>{el.onerror=null;el.src=fallback(el.dataset.h,Number(el.dataset.v)||0)};
-const gal=p=>p.images||[p.img,`images/products/${p.id}-2.jpg`,`images/products/${p.id}-3.jpg`,`images/products/${p.id}-4.jpg`];
-const im=(src,alt,h,v,x='')=>`<img src="${src}" alt="${alt}" data-h="${h}" data-v="${v}" onerror="imgFail(this)" ${x}>`;
+const gal=p=>(p.images&&p.images.length?p.images:[p.img,`images/products/${p.id}-2.jpg`,`images/products/${p.id}-3.jpg`,`images/products/${p.id}-4.jpg`]).map((u,i)=>u||fallback(p.h,i));
+const im=(src,alt,h,v,x='')=>`<img src="${src}" alt="${String(alt).replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" data-h="${h}" data-v="${v}" onerror="imgFail(this)" ${x}>`;
 const rm=n=>`${CFG.currency} ${Number(n).toLocaleString('en-MY',{minimumFractionDigits:Number.isInteger(n)?0:2,maximumFractionDigits:2})}`;
 const $=(s,c=document)=>c.querySelector(s),$$=(s,c=document)=>[...c.querySelectorAll(s)];
 const byId=i=>PRODUCTS.find(p=>p.id===Number(i));
@@ -569,22 +570,22 @@ const related=[...PRODUCTS.filter(x=>x.id!==p.id&&x.cat===p.cat),...PRODUCTS.fil
 $('#app').innerHTML=`
 <div class="crumbs"><a href="index.html">Home</a><i class="fa-solid fa-chevron-right"></i><a href="index.html#shop">${CATN[p.cat]||'Shop'}</a><i class="fa-solid fa-chevron-right"></i><span>${p.name}</span></div>
 <section class="pd">
- <div class="gal"><div class="thumbs">${imgs.map((s,i)=>`<button class="th" data-i="${i}" aria-label="${VIEWS[i]||'Photo '+(i+1)}" aria-current="${i===0}">${im(s,VIEWS[i]||'Photo '+(i+1),p.h,i)}</button>`).join('')}</div>
+ <div class="gal${N>1?'':' single'}">${N>1?`<div class="thumbs">${imgs.map((s,i)=>`<button class="th" data-i="${i}" aria-label="${VIEWS[i]||'Photo '+(i+1)}" aria-current="${i===0}">${im(s,VIEWS[i]||'Photo '+(i+1),p.h,i)}</button>`).join('')}</div>`:''}
   <div><div class="stage" id="stage">${im(imgs[0],p.name,p.h,0,'id="main"')}
-   <span class="save">Save ${off}%</span><button class="arr p" aria-label="Previous photo"><i class="fa-solid fa-chevron-left"></i></button><button class="arr n" aria-label="Next photo"><i class="fa-solid fa-chevron-right"></i></button><span class="cnt" id="cnt">1 / ${N}</span></div>
-   <div class="dots">${imgs.map((_,i)=>`<button data-i="${i}" aria-label="Photo ${i+1}" aria-current="${i===0}"></button>`).join('')}</div></div></div>
+   ${off>0?`<span class="save">Save ${off}%</span>`:''}${N>1?`<button class="arr p" aria-label="Previous photo"><i class="fa-solid fa-chevron-left"></i></button><button class="arr n" aria-label="Next photo"><i class="fa-solid fa-chevron-right"></i></button><span class="cnt" id="cnt">1 / ${N}</span>`:''}</div>
+   ${N>1?`<div class="dots">${imgs.map((_,i)=>`<button data-i="${i}" aria-label="Photo ${i+1}" aria-current="${i===0}"></button>`).join('')}</div>`:''}</div></div>
  <div class="info">
   <p class="cat">${p.label}</p><h1>${p.name}</h1>
   
   <div class="price"><b>${rm(p.price)}</b><s>${rm(p.was)}</s></div>
   <p class="tax">Free shipping over RM 150 · Pay in cash when it arrives</p>
   <p class="desc">${p.desc}</p>
-  <div class="notes"><h3>Fragrance notes</h3><div class="chips">${p.notes.map(n=>`<span>${n}</span>`).join('')}</div></div>
+  ${p.notes&&p.notes.length?`<div class="notes"><h3>Fragrance notes</h3><div class="chips">${p.notes.map(n=>`<span>${n}</span>`).join('')}</div></div>`:''}
   <div class="buy"><div class="qty"><button id="mi" aria-label="Decrease">−</button><output id="q">1</output><button id="pl" aria-label="Increase">+</button></div>
    <button class="btn btn-main" id="add"><i class="fa-solid fa-bag-shopping"></i> Add to cart</button></div>
   <button class="btn btn-now" id="buy" type="button"><i class="fa-solid fa-bolt"></i> Order now</button>
   <div class="assure"><div><i class="fa-solid fa-money-bill-wave"></i><b>Cash on delivery</b><small>Across Malaysia</small></div><div><i class="fa-solid fa-truck-fast"></i><b>Fast delivery</b><small>Free over RM 150</small></div><div><i class="fa-solid fa-shield-halved"></i><b>100% authentic</b><small>Premium quality</small></div></div>
-  <details open><summary>About this fragrance</summary><p>${p.desc} Crafted for long wear, it opens with ${p.notes[0].toLowerCase()} and settles into ${p.notes[p.notes.length-1].toLowerCase()}.</p></details>
+  <details open><summary>About this fragrance</summary><p>${p.desc} ${p.notes&&p.notes.length>1?`Crafted for long wear, it opens with ${p.notes[0].toLowerCase()} and settles into ${p.notes[p.notes.length-1].toLowerCase()}.`:'Crafted for long wear.'}</p></details>
   <details><summary>Delivery &amp; cash on delivery</summary><p>We deliver across Malaysia. Pay the courier in cash when your parcel arrives. Shipping is free on orders over RM 150, otherwise RM 8.</p></details>
   <details><summary>Care &amp; returns</summary><p>Store in a cool, dry place away from direct sunlight. If your parcel arrives damaged, message us on WhatsApp and we will sort it out.</p></details>
  </div>
@@ -596,10 +597,10 @@ let cur=0;const main=$('#main'),stage=$('#stage');
 function go(i){cur=(i+N)%N;main.classList.add('out');setTimeout(()=>{main.dataset.v=cur;main.src=imgs[cur];main.alt=`${p.name} – ${VIEWS[cur]||'Photo '+(cur+1)}`;main.onerror=()=>imgFail(main);main.classList.remove('out')},180);
  $$('.th,.dots button').forEach(b=>b.setAttribute('aria-current',Number(b.dataset.i)===cur));$('#cnt').textContent=`${cur+1} / ${N}`}
 $$('.th,.dots button').forEach(b=>b.onclick=()=>go(Number(b.dataset.i)));
-$('.arr.p').onclick=()=>go(cur-1);$('.arr.n').onclick=()=>go(cur+1);
-document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')go(cur-1);if(e.key==='ArrowRight')go(cur+1)});
+if(N>1){$('.arr.p').onclick=()=>go(cur-1);$('.arr.n').onclick=()=>go(cur+1)}
+document.addEventListener('keydown',e=>{if(N<2)return;if(e.key==='ArrowLeft')go(cur-1);if(e.key==='ArrowRight')go(cur+1)});
 let sx=null;stage.addEventListener('touchstart',e=>sx=e.touches[0].clientX,{passive:true});
-stage.addEventListener('touchend',e=>{if(sx===null)return;const d=e.changedTouches[0].clientX-sx;if(Math.abs(d)>40)go(cur+(d<0?1:-1));sx=null});
+stage.addEventListener('touchend',e=>{if(sx===null)return;const d=e.changedTouches[0].clientX-sx;if(N>1&&Math.abs(d)>40)go(cur+(d<0?1:-1));sx=null});
 if(matchMedia('(hover:hover) and (min-width:901px)').matches){
  stage.addEventListener('mouseenter',()=>stage.classList.add('zoom'));
  stage.addEventListener('mouseleave',()=>{stage.classList.remove('zoom');main.style.transformOrigin=''});
