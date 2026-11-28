@@ -900,6 +900,17 @@ a.plink{display:contents}
 .tst-by small{color:var(--muted);font-size:.76rem}
 @media (max-width:700px){.tst-card{width:292px;padding:24px 22px 20px}.tst-card h3{font-size:1.5rem}.tst-track{gap:16px;animation-duration:60s}.tst-row.to-right .tst-track{animation-duration:68s}.tst-rows{gap:10px}}
 @media (prefers-reduced-motion:reduce){.tst-track{animation:none}.tst-row{overflow-x:auto}.tst-card[aria-hidden="true"]{display:none}.tst-rows{-webkit-mask-image:none;mask-image:none}}
+/* single category card: centred, fixed width, always open */
+.cat-grid.solo{display:flex;justify-content:center}
+.cat-grid.solo .cat,.cat-grid.solo .cat.on{flex:0 1 560px;width:100%;max-width:560px;height:clamp(540px,76vh,650px);border-radius:210px 210px 6px 6px}
+.cat-grid.solo .cat-vert{display:none}
+.cat-grid.solo .cat-body{opacity:1;transform:none}
+@media (max-width:560px){.cat-grid.solo .cat,.cat-grid.solo .cat.on{height:520px;border-radius:200px 200px 6px 6px}}
+/* big Editor's pick card: keep the discount badge clear of the "100% authentic" seal in the photo, and show the whole square photo on phones */
+.spot-stage .spot-off{left:auto;bottom:auto;right:22px;top:22px}
+.spot-photo[src*="spotlight-"]{object-position:100% 50%}
+@media (max-width:700px){.spot-stage .spot-off{width:74px;height:74px;right:16px;top:16px;font-size:1.25rem}.spot-stage .spot-off small{font-size:.54rem}}
+@media (max-width:960px){.spot-stage{min-height:0;aspect-ratio:1/1}}
 </style>
 
 </head>
@@ -1209,10 +1220,7 @@ const PRODUCTS = [
 ];
 if(window.epMerge)epMerge(PRODUCTS);
 const CATEGORIES = [
-  { key:'men',    title:"Men's Perfumes",     sub:'Bold · Woody · Fresh',   img:'/images/products/dior-sauvage-elixir-100ml.jpg', h:210 },
-  { key:'women',  title:"Women's Perfumes",   sub:'Floral · Soft · Radiant', img:'/images/products/dior-jadore-edp-100ml.jpg', h:345 },
-  { key:'unisex', title:'Unisex Fragrances',  sub:'Modern · Balanced',       img:'/images/products/tom-ford-oud-wood-edp-100ml.jpg', h:40 },
-  { key:'luxury', title:'Luxury Collection',  sub:'Rare · Rich · Refined',    img:'/images/products/jpg-le-male-elixir-100ml.jpg', h:36 }
+  { key:'men',    title:"Men's Perfumes",     sub:'Bold · Woody · Fresh',   img:'/images/products/dior-sauvage-elixir-100ml.jpg', h:210 }
 ];
 const STATES = ['Johor','Kedah','Kelantan','Melaka','Negeri Sembilan','Pahang','Perak','Perlis','Pulau Pinang','Sabah','Sarawak','Selangor','Terengganu','Kuala Lumpur','Labuan','Putrajaya'];
 const byId = id => PRODUCTS.find(p => p.id === Number(id));
@@ -1523,6 +1531,7 @@ function catFx(key, fx){
 
 function renderCategories(){
   const count = k => PRODUCTS.filter(p => k==='luxury' ? p.luxury : p.cat===k).length;
+  $('#catGrid').classList.toggle('solo', CATEGORIES.length === 1);
   $('#catGrid').innerHTML = CATEGORIES.map((c,i)=>{
     const st = CAT_STYLE[c.key], b = catBottle(c.key, 'cb'+i);
     return `<a class="cat" href="${({men:'men.html',women:'women.html'})[c.key]||'shop.html?f='+c.key}" data-reveal style="--i:${i};--c1:${st.c1};--c2:${st.c2};--glow:${st.glow};--fg:${st.fg};--shade:${st.shade}" aria-label="${c.title}">
@@ -1616,17 +1625,21 @@ function cardHTML(p, i=0){
       <div class="p-buy"><div class="price"><b>${rm(p.price)}</b><s>${rm(p.was)}</s></div><button class="p-add" data-add="${p.id}"><i class="fa-solid fa-plus"></i> Add</button></div>
     </div></article>`;
 }
+/* Editor's pick (big card at the top of Our Most Loved Fragrances): Baccarat Rouge 540 with its own studio photo */
+const SPOT_IMG = [{ test:/baccarat/i, src:'/images/spotlight-baccarat-rouge-540.jpg' }];
+const spotImg  = p => (SPOT_IMG.find(x=>x.test.test(p.name))||{}).src || null;
+const spotName = p => /baccarat/i.test(p.name) ? p.name.split(/\s[-–|]\s/)[0] : p.name; // drop the long “- 100% Authentic | Unisex Perfume” tail
 function spotHTML(p){
   return `<article class="spot" style="--h:${p.h};--i:0">
-    <div class="spot-stage">${catFx('spot','spark')}<span class="spot-pill">Editor’s pick</span><a class="plink" href="${epUrl(p)}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img.replace('w=900','w=1400'),p.name,p.h,'class="spot-photo"')}</a><div class="spot-off">−${off(p)}%<small>today</small></div></div>
-    <div class="spot-info"><span class="eyebrow">${p.label}</span><h3><a href="${epUrl(p)}">${p.name}</a></h3>
+    <div class="spot-stage">${catFx('spot','spark')}<span class="spot-pill">Editor’s pick</span><a class="plink" href="${epUrl(p)}" tabindex="-1" aria-label="${p.name}">${imgTag(spotImg(p)||p.img.replace('w=900','w=1400'),spotName(p),p.h,'class="spot-photo"')}</a><div class="spot-off">−${off(p)}%<small>today</small></div></div>
+    <div class="spot-info"><span class="eyebrow">${p.label}</span><h3><a href="${epUrl(p)}">${spotName(p)}</a></h3>
       
       <p>${p.desc}</p><div class="notes">${p.notes.map(n=>`<span>${n}</span>`).join('')}</div>
       <div class="price"><b>${rm(p.price)}</b><s>${rm(p.was)}</s></div>
       <div class="spot-cta"><button class="btn btn-dark" data-add="${p.id}">Add to cart <i class="fa-solid fa-arrow-right-long"></i></button><a class="btn btn-line" href="${epUrl(p)}">View product</a></div></div></article>`;
 }
 function spotPick(){ // Editor's pick: first luxury best seller, else any best seller / luxury, else the first product (never crashes if a product was deleted)
-  return PRODUCTS.find(p=>p.luxury&&p.best)||PRODUCTS.find(p=>p.best)||PRODUCTS.find(p=>p.luxury)||PRODUCTS[0]||null;
+  return PRODUCTS.find(p=>/baccarat/i.test(p.name))||PRODUCTS.find(p=>p.luxury&&p.best)||PRODUCTS.find(p=>p.best)||PRODUCTS.find(p=>p.luxury)||PRODUCTS[0]||null;
 }
 function renderProducts(){
   const list = filtered(), g = $('#productGrid');
