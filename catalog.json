@@ -1,4 +1,5 @@
 {
+  "version": 2,
   "config": {
     "deliveryFee": 8,
     "freeShippingOver": 150

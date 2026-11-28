@@ -36,7 +36,17 @@ function applyCatalog(c) {
 async function loadCatalog(fresh) {
   if (!fresh && CATALOG && Date.now() - catAt < 10000) return CATALOG; // public pages reuse it for 10 s
   let c = await store.get('catalog');
-  if (!c) { c = JSON.parse(JSON.stringify(require('./catalog.json'))); await store.set('catalog', c); }
+  const file = require('./catalog.json');
+  if (!c) { c = JSON.parse(JSON.stringify(file)); await store.set('catalog', c); }
+  else if ((Number(c.version) || 1) < (Number(file.version) || 1)) {
+    // One-time sync: products added to catalog.json in a newer version are appended once (never overwriting or re-adding by name/photo).
+    let next = Math.max(0, ...c.products.map(p => Number(p.id) || 0)) + 1;
+    for (const p of file.products) {
+      if (c.products.some(x => Number(x.id) === Number(p.id) && x.name === p.name || x.name === p.name || (p.img && x.img === p.img))) continue;
+      c.products.push({ ...JSON.parse(JSON.stringify(p)), id: next++ });
+    }
+    c.version = file.version; await store.set('catalog', c);
+  }
   applyCatalog(c); return c;
 }
 async function persistCatalog() { await store.set('catalog', CATALOG); applyCatalog(CATALOG); }
@@ -285,11 +295,10 @@ app.post('/api/track', async (req, res) => {
 
 /* ===== ADMIN PRODUCT MANAGEMENT (authenticated) ===== */
 app.get('/api/admin/products', auth, async (req,res)=>{ await loadCatalog(true); res.json({products:CATALOG.products, config:CATALOG.config}); });
-const cleanImages = a => (Array.isArray(a) ? a : []).map(u => str(u, 2000)).filter(u => /^(\/|https?:\/\/|images\/)/.test(u)).slice(0, 8);
 app.post('/api/admin/products', auth, async (req,res)=>{await loadCatalog(true);
   const b=req.body||{}; const name=str(b.name,120); const price=Number(b.price), id=Math.max(0,...CATALOG.products.map(p=>Number(p.id)||0))+1;
   if(name.length<2 || !Number.isFinite(price) || price<0) return res.status(400).json({error:'Product name and valid price are required.'});
-  const p={id,name,price,cat:['men','women','unisex'].includes(b.cat)?b.cat:'unisex',label:str(b.label,100),img:cleanImages(b.images)[0]||str(b.img,2000),images:cleanImages(b.images),was:Number(b.was)||0,active:b.active!==false,stock:Math.max(0,Math.floor(Number(b.stock)||0)),sku:str(b.sku,40),description:str(b.description,1000)};
+  const p={id,name,price,cat:['men','women','unisex'].includes(b.cat)?b.cat:'unisex',label:str(b.label,100),img:str(b.img,2000),was:Number(b.was)||0,active:b.active!==false,stock:Math.max(0,Math.floor(Number(b.stock)||0)),sku:str(b.sku,40),description:str(b.description,1000)};
   CATALOG.products.push(p); await persistCatalog(); res.status(201).json({product:p});
 });
 app.put('/api/admin/products/:id', auth, async (req,res)=>{await loadCatalog(true);
@@ -299,7 +308,6 @@ app.put('/api/admin/products/:id', auth, async (req,res)=>{await loadCatalog(tru
   if(b.cat!==undefined)p.cat=['men','women','unisex'].includes(b.cat)?b.cat:'unisex';
   if(b.was!==undefined)p.was=Math.max(0,Number(b.was)||0);
   for(const k of ['label','img','sku','description'])if(b[k]!==undefined)p[k]=str(b[k], k==='img'?2000:k==='description'?1000:120);
-  if(b.images!==undefined){p.images=cleanImages(b.images);p.img=p.images[0]||'';}
   if(b.active!==undefined)p.active=!!b.active;if(b.stock!==undefined)p.stock=Math.max(0,Math.floor(Number(b.stock)||0));
   await persistCatalog();res.json({product:p});
 });
@@ -321,8 +329,7 @@ app.post('/api/admin/login', async (req, res) => {
   const A = await getAdmin();
   if (!A) return res.status(503).json({ error: 'Admin is not set up yet. Add ADMIN_PASSWORD in the Vercel environment variables and redeploy.' });
   const pwOk = checkPw(typeof password === 'string' ? password : '', A.hash);
-  const same = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
-  if (!(typeof user === 'string' && same(user, A.user) && pwOk)) return res.status(401).json({ error: 'Wrong username or password.' });
+  if (!(typeof user === 'string' && user === A.user && pwOk)) return res.status(401).json({ error: 'Wrong username or password.' });
   setSession(req, res, A);
   res.json({ ok: true, user });
 });
@@ -338,8 +345,7 @@ app.post('/api/admin/reset', async (req, res) => {
   const h = v => crypto.createHash('sha256').update(String(v)).digest();
   if (typeof key !== 'string' || !crypto.timingSafeEqual(h(key), h(rk))) return res.status(401).json({ error: 'Wrong recovery key.' });
   if (typeof next !== 'string' || next.length < 8) return res.status(400).json({ error: 'New password must be at least 8 characters.' });
-  const A = (await getAdmin()) || { user: 'admin' };
-  if (process.env.ADMIN_USER && process.env.ADMIN_USER.trim()) A.user = process.env.ADMIN_USER.trim();
+  const A = (await getAdmin()) || { user: process.env.ADMIN_USER || 'admin' };
   A.hash = hashPw(next);
   await store.set('admin', A); // old login cookies stop working automatically
   res.json({ ok: true, user: A.user });
@@ -417,23 +423,6 @@ app.get('/images/products/:name', async (req, res, next) => {
   res.set({ 'Content-Type': im.t, 'Cache-Control': 'public, max-age=31536000, immutable' });
   res.send(Buffer.from(im.d, 'base64'));
 });
-// Open /api/health to see what is wrong (shows only yes/no, never any secret)
-app.get('/api/health', async (req, res) => {
-  const has = n => !!process.env[n];
-  const out = {
-    store: store.mode,
-    variables: {
-      KV_or_UPSTASH_url: has('KV_REST_API_URL') || has('UPSTASH_REDIS_REST_URL'),
-      KV_or_UPSTASH_token: has('KV_REST_API_TOKEN') || has('UPSTASH_REDIS_REST_TOKEN'),
-      REDIS_URL: has('REDIS_URL'),
-      ADMIN_PASSWORD: has('ADMIN_PASSWORD'), ADMIN_USER: has('ADMIN_USER'),
-      SESSION_SECRET: has('SESSION_SECRET'), ADMIN_RECOVERY_KEY: has('ADMIN_RECOVERY_KEY')
-    }
-  };
-  try { await store.set('health', { at: new Date().toISOString() }); out.database = 'working'; out.adminAccountCreated = !!(await store.get('admin')); }
-  catch (e) { out.database = 'NOT working: ' + store.safeMsg(e); }
-  res.set('Cache-Control', 'no-store').json(out);
-});
 // Vercel Cron calls this once a day so the free database never goes idle
 app.get('/api/keepalive', async (req, res) => {
   if (process.env.CRON_SECRET && req.headers.authorization !== 'Bearer ' + process.env.CRON_SECRET) return res.status(401).json({ error: 'Unauthorized' });
@@ -444,8 +433,6 @@ app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] })
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
   if (err.type !== 'entity.parse.failed' && err.type !== 'entity.too.large') console.error(err);
-  if (err.code === 'NO_DB') return res.status(503).json({ error: err.message });
-  if (/^Redis:/.test(err.message || '') || err.cause) return res.status(503).json({ error: 'Database problem: ' + store.safeMsg(err) + '. Check the database variables in Vercel and Redeploy.' });
   res.status(err.status && err.status < 500 ? err.status : 500).json({ error: err.status && err.status < 500 ? 'Invalid request' : 'Server error' });
 });
 
