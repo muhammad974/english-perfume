@@ -1577,9 +1577,12 @@ function spotHTML(p){
       <div class="price"><b>${rm(p.price)}</b><s>${rm(p.was)}</s></div>
       <div class="spot-cta"><button class="btn btn-dark" data-add="${p.id}">Add to cart <i class="fa-solid fa-arrow-right-long"></i></button><a class="btn btn-line" href="product.html?id=${p.id}">View product</a></div></div></article>`;
 }
+function spotPick(){ // Editor's pick: first luxury best seller, else any best seller / luxury, else the first product (never crashes if a product was deleted)
+  return PRODUCTS.find(p=>p.luxury&&p.best)||PRODUCTS.find(p=>p.best)||PRODUCTS.find(p=>p.luxury)||PRODUCTS[0]||null;
+}
 function renderProducts(){
   const list = filtered(), g = $('#productGrid');
-  $('#spotlight').innerHTML = (filter==='all' && !query.trim() && sort==='featured') ? spotHTML(byId(3)) : '';
+  $('#spotlight').innerHTML = (filter==='all' && !query.trim() && sort==='featured') ? (spotPick() ? spotHTML(spotPick()) : '') : '';
   g.innerHTML = list.length ? list.map(cardHTML).join('') : `<div class="empty"><h3 class="h2" style="font-size:2rem">No fragrances found</h3><p>Try another category or search term.</p></div>`;
   $$('#filters .chip').forEach(c => c.classList.toggle('active', c.dataset.f===filter));
   updateWish();
