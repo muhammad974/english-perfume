@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Shop All Perfumes – English Perfume</title>
 <script src="js/ep-catalog.js"></script>
+<script src="/js/ep-brands.js"></script>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
@@ -784,12 +785,12 @@ const off=p=>Math.round((1-p.price/p.was)*100);
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
-let cart=load(CONFIG.cartKey,[]).filter(i=>byId(i.id)),wish=load(CONFIG.wishKey,[]),filter='all',sort='featured',query='';
+let cart=load(CONFIG.cartKey,[]).filter(i=>byId(i.id)),wish=load(CONFIG.wishKey,[]),filter='all',sort='featured',query='',brandSel='';
 const FILTERS=[['all','All'],['best','Best sellers'],['men','Men'],['women','Women'],['unisex','Unisex'],['luxury','Luxury']];
 const match=(p,f)=>f==='all'||(f==='best'?p.best:f==='luxury'?p.luxury:p.cat===f);
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),2200)}
 function list(){
-  let l=PRODUCTS.filter(p=>match(p,filter));
+  let l=PRODUCTS.filter(p=>match(p,filter)&&(!brandSel||(window.epBrandMatch&&epBrandMatch(p,brandSel))));
   const q=query.trim().toLowerCase();
   if(q)l=l.filter(p=>[p.name,p.label,p.cat,...p.notes].join(' ').toLowerCase().includes(q));
   const s={rated:(a,b)=>b.rating-a.rating,low:(a,b)=>a.price-b.price,high:(a,b)=>b.price-a.price,disc:(a,b)=>off(b)-off(a)}[sort];
@@ -837,12 +838,16 @@ document.addEventListener('click',e=>{
   if(g('[data-rm]')){cart=cart.filter(i=>i.id!==Number(g('[data-rm]').dataset.rm));persist()}
   if(g('#cartBtn'))openDr(true);
   if(g('#dx')||g('#ov'))openDr(false);
-  if(g('#reset')){query='';$('#q').value='';filter='all';render()}
+  if(g('#reset')){query='';$('#q').value='';filter='all';if(brandSel){brandSel='';history.replaceState(null,'','/shop.html');brandHead()}render()}
   if(g('#wishBtn')){const on=filter==='wish';filter=on?'all':'wish';if(!on){const l=PRODUCTS.filter(p=>wish.includes(p.id));$('#grid').innerHTML=l.length?l.map(card).join(''):'<div class="empty"><h2>Your wishlist is empty</h2><p>Tap the heart on any fragrance to save it here.</p><button id="reset">Browse all</button></div>';$('#count').innerHTML=`Wishlist: <b>${l.length}</b> saved`;$$('.chip').forEach(c=>c.classList.remove('on'))}else render()}
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')openDr(false)});
 $('#q').addEventListener('input',e=>{query=e.target.value;if(filter==='wish')filter='all';render()});
 $('#sort').addEventListener('change',e=>{sort=e.target.value;if(filter==='wish')filter='all';render()});
+function brandHead(){const b=brandSel&&window.epBrandByslug&&epBrandByslug(brandSel);const h=document.querySelector('.head h1'),c=document.querySelector('.head .crumb'),pp=document.querySelector('.head-row p');
+ if(b){h.innerHTML=b.name+'<br><i>perfumes.</i>';c.innerHTML='<a href="index.html">Home</a> / <a href="shop.html">Shop all</a> / '+b.name;pp.textContent='Authentic '+b.name+' fragrances, delivered across Malaysia with cash on delivery.';document.title=b.name+' Perfumes | English Perfume'}
+ else if(h){h.innerHTML='Every fragrance,<br><i>one place.</i>';c.innerHTML='<a href="index.html">Home</a> / Shop all'}}
+const hb=new URLSearchParams(location.search).get('brand');if(hb&&window.epBrandByslug&&epBrandByslug(hb)){brandSel=hb;brandHead()}
 const hf=new URLSearchParams(location.search).get('f');if(hf&&FILTERS.some(([k])=>k===hf))filter=hf;
 const hq=new URLSearchParams(location.search).get('q');if(hq){query=hq;filter='all';$('#q').value=hq}
 chips();render();badges();drawer();

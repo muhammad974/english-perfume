@@ -606,7 +606,7 @@ app.get(/^\/([a-z0-9-]+)-p(\d+)$/, async (req, res) => {
   let html = await productTemplate(req);
   html = html.replace(/<!--SEO-START-->[\s\S]*?<!--SEO-END-->/g, '').replace(/<title>[\s\S]*?<\/title>/i, '')
     .replace(/<meta name="description"[^>]*>/i, '').replace(/<meta name="robots"[^>]*>/i, '')
-    .replace('</head>', productSeo(req, p) + '\n</head>');
+    .replace('</head>', () => productSeo(req, p) + '\n</head>');   // function form: a "$&" or "$'" inside a product name can never garble the page
   res.set({ 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=0, s-maxage=300, stale-while-revalidate=600' }).send(html);
 });
 
