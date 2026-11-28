@@ -105,7 +105,9 @@
       "label": "Amber · Vanilla · Lavender",
       "img": "/images/products/jpg-le-male-elixir-100ml.jpg",
       "description": "Jean Paul Gaultier Le Male Elixir 100ml for men. A rich, warm and intense fragrance with lavender, mint, vanilla, honey and tonka. 100% authentic.",
-      "active": true
+      "active": true,
+      "best": true,
+      "luxury": true
     },
     {
       "id": 13,
@@ -116,7 +118,9 @@
       "label": "Woody · Leather · Violet",
       "img": "/images/products/dior-fahrenheit-edt-100ml.jpg",
       "description": "Dior Fahrenheit Eau de Toilette for men, 100ml. 100% authentic.",
-      "active": true
+      "active": true,
+      "best": true,
+      "luxury": false
     },
     {
       "id": 14,
@@ -127,7 +131,9 @@
       "label": "Floral · Fruity · Jasmine",
       "img": "/images/products/dior-jadore-edp-100ml.jpg",
       "description": "Dior J'adore Eau de Parfum for women, 100ml. 100% authentic.",
-      "active": true
+      "active": true,
+      "best": true,
+      "luxury": false
     },
     {
       "id": 15,
@@ -138,7 +144,9 @@
       "label": "Floral · Lavender · Vanilla",
       "img": "/images/products/ysl-libre-edp-intense-90ml.jpg",
       "description": "YSL Libre Eau de Parfum Intense for women, 90ml. 100% authentic.",
-      "active": true
+      "active": true,
+      "best": true,
+      "luxury": true
     },
     {
       "id": 16,
@@ -149,7 +157,9 @@
       "label": "Spicy · Woody · Amber",
       "img": "/images/products/dior-sauvage-elixir-100ml.jpg",
       "description": "Dior Sauvage Elixir Eau de Parfum for men, 100ml. 100% authentic.",
-      "active": true
+      "active": true,
+      "best": true,
+      "luxury": true
     },
     {
       "id": 17,
@@ -160,7 +170,9 @@
       "label": "Fresh · Green · Aromatic",
       "img": "/images/products/hugo-boss-hugo-man-edt-150ml.jpg",
       "description": "Hugo Boss Hugo Man Eau de Toilette for men, 150ml. 100% authentic.",
-      "active": true
+      "active": true,
+      "best": false,
+      "luxury": false
     },
     {
       "id": 18,
@@ -171,7 +183,9 @@
       "label": "Spicy · Leather · Tonka",
       "img": "/images/products/bvlgari-man-in-black-edp-100ml.jpg",
       "description": "Bvlgari Man In Black Eau de Parfum for men, 100ml. 100% authentic.",
-      "active": true
+      "active": true,
+      "best": false,
+      "luxury": false
     },
     {
       "id": 19,
@@ -182,7 +196,9 @@
       "label": "Woody · Oud · Spicy",
       "img": "/images/products/tom-ford-oud-wood-edp-100ml.jpg",
       "description": "Tom Ford Oud Wood Eau de Parfum, unisex, 100ml. 100% authentic.",
-      "active": true
+      "active": true,
+      "best": false,
+      "luxury": true
     },
     {
       "id": 20,
@@ -193,7 +209,9 @@
       "label": "Citrus · Fresh · Amber",
       "img": "/images/products/louis-vuitton-imagination-edp-100ml.jpg",
       "description": "Louis Vuitton Imagination Eau de Parfum for men, 100ml. 100% authentic.",
-      "active": true
+      "active": true,
+      "best": false,
+      "luxury": true
     }
   ]
 }
