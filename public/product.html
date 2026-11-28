@@ -586,7 +586,7 @@ $('#app').innerHTML=`
    <button class="btn btn-main" id="add"><i class="fa-solid fa-bag-shopping"></i> Add to cart</button></div>
   <button class="btn btn-now" id="buy" type="button"><i class="fa-solid fa-bolt"></i> Order now</button>
   <div class="assure"><div><i class="fa-solid fa-money-bill-wave"></i><b>Cash on delivery</b><small>Across Malaysia</small></div><div><i class="fa-solid fa-truck-fast"></i><b>Fast delivery</b><small>Free over RM 150</small></div><div><i class="fa-solid fa-shield-halved"></i><b>100% authentic</b><small>Premium quality</small></div></div>
-  <details open><summary>About this fragrance</summary><p>${p.desc} ${p.notes&&p.notes.length>1?`Crafted for long wear, it opens with ${p.notes[0].toLowerCase()} and settles into ${p.notes[p.notes.length-1].toLowerCase()}.`:'Crafted for long wear.'}</p></details>
+  <details open><summary>About this fragrance</summary><p>${p.desc} ${p.notes&&p.notes.length>1?`Crafted for long wear, it opens with ${String(p.notes[0]||'').toLowerCase()} and settles into ${String(p.notes[p.notes.length-1]||'').toLowerCase()}.`:'Crafted for long wear.'}</p></details>
   <details><summary>Delivery &amp; cash on delivery</summary><p>We deliver across Malaysia. Pay the courier in cash when your parcel arrives. Shipping is free on orders over RM 150, otherwise RM 8.</p></details>
   <details><summary>Care &amp; returns</summary><p>Store in a cool, dry place away from direct sunlight. If your parcel arrives damaged, message us on WhatsApp and we will sort it out.</p></details>
  </div>
@@ -633,8 +633,8 @@ $('#add').onclick=()=>add();$('#add2').onclick=()=>add();$('#buy').onclick=()=>a
 
   /* search panel */
   const ov=g('searchOv'), sIn=g('searchInput');
-  const hay=x=>[x.name,x.label,x.cat,x.notes.join(' '),x.luxury?'luxury':'',x.best?'best seller':''].join(' ').toLowerCase();
-  const mark=(name,q)=>{const t=q.trim(),i=name.toLowerCase().indexOf(t.toLowerCase());return(!t||i<0)?name:name.slice(0,i)+'<mark>'+name.slice(i,i+t.length)+'</mark>'+name.slice(i+t.length)};
+  const hay=x=>[x.name,x.label,x.cat,(x.notes||[]).join(' '),x.luxury?'luxury':'',x.best?'best seller':''].join(' ').toLowerCase();
+  const mark=(name,q)=>{name=String(name||'');const t=q.trim(),i=name.toLowerCase().indexOf(t.toLowerCase());return(!t||i<0)?name:name.slice(0,i)+'<mark>'+name.slice(i,i+t.length)+'</mark>'+name.slice(i+t.length)};
   const sItem=(x,q)=>`<div class="sp-item" data-pid="${x.id}" role="button" tabindex="0" aria-label="View ${x.name}">
     <div class="sp-ph">${im(x.img.replace('w=900','w=300'),x.name,x.h,0)}</div>
     <div class="sp-txt"><small>${x.label}</small><b>${mark(x.name,q)}</b><span class="sp-pr">${rm(x.price)}<s>${rm(x.was)}</s></span></div>
@@ -681,5 +681,6 @@ $('#add').onclick=()=>add();$('#add2').onclick=()=>add();$('#buy').onclick=()=>a
   addEventListener('scroll',()=>{g('nav').classList.toggle('solid',scrollY>60);g('toTop').classList.toggle('show',scrollY>900)},{passive:true});
 })();
 </script>
+<script src="js/ep-social.js"></script>
 </body>
 </html>

@@ -220,6 +220,36 @@ app.use('/api/orders', (req, res, next) => {
 /* ===== PUBLIC: current product catalogue ===== */
 app.get('/api/catalog', async (req,res)=>{ await loadCatalog(); res.set('Cache-Control','no-store').json({products:CATALOG.products,config:CATALOG.config}); });
 
+/* ===== PUBLIC: how many units of a product were ordered in the last 24 hours (a number only, no customer data) ===== */
+app.get('/api/sold', async (req, res) => {
+  const id = Number(req.query.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'bad id' });
+  await loadOrders();
+  const since = Date.now() - 24 * 3600e3;
+  let sold = 0;
+  for (const o of DB.orders) {
+    if (o.status === 'cancelled' || new Date(o.createdAt).getTime() < since) continue;
+    for (const i of (o.items || [])) if (Number(i.productId) === id) sold += Number(i.qty) || 0;
+  }
+  res.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120').json({ sold, hours: 24 });
+});
+
+/* ===== PUBLIC: live visitors on a product page (each open page checks in every 30 s; a number only) ===== */
+app.post('/api/viewing', async (req, res) => {
+  const id = Number((req.body || {}).id), vid = String((req.body || {}).vid || '');
+  if (!Number.isInteger(id) || !/^[a-z0-9-]{8,40}$/i.test(vid)) return res.status(400).json({ error: 'bad request' });
+  if (!(await limit('view:' + req.ip, 240, 600e3))) return res.status(429).json({ viewing: 0 });
+  const now = Date.now();
+  await store.hset('views', vid, { vid, id, t: now });
+  const all = await store.hall('views');
+  let viewing = 0;
+  for (const v of all) {
+    if (now - v.t > 600e3) { store.hdel('views', v.vid).catch(() => {}); continue; }   // tidy up old check-ins
+    if (v.id === id && now - v.t < 75e3) viewing++;
+  }
+  res.set('Cache-Control', 'no-store').json({ viewing });
+});
+
 /* ===== PUBLIC: place an order ===== */
 app.post('/api/orders', async (req, res) => {
   // generous cap on raw attempts (typos, retries); the stricter cap below counts only real orders
