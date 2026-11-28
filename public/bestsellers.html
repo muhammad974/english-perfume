@@ -978,17 +978,17 @@ const heart=(p,c)=>{const on=wish.includes(p.id);return `<button class="${c}${on
 const notes=p=>`<div class="notes">${p.notes.slice(0,3).map(n=>`<span>${n}</span>`).join('')}</div>`;
 const star=p=>``;
 const pod=(p,r)=>`<article class="bs-pod bs-rv r${r}" style="--d:${[0,1,2][r===1?0:r===2?1:2]*120}ms"><span class="bs-rank">${r}</span>${r===1?'<span class="bs-crown"><i class="fa-solid fa-crown"></i> Most loved</span>':''}${heart(p,'bs-wish')}
-  <div class="bs-ph"><a class="plink" href="product.html?id=${p.id}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h)}</a><span class="bs-off">−${off(p)}%</span></div>
-  <div class="bs-info"><span class="lab">${p.label}</span><h3><a href="product.html?id=${p.id}">${p.name}</a></h3>${star(p)}${notes(p)}
+  <div class="bs-ph"><a class="plink" href="${epUrl(p)}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h)}</a><span class="bs-off">−${off(p)}%</span></div>
+  <div class="bs-info"><span class="lab">${p.label}</span><h3><a href="${epUrl(p)}">${p.name}</a></h3>${star(p)}${notes(p)}
   <div class="bs-buy"><div class="price"><b>${rm(p.price)}</b><s>${rm(p.was)}</s></div><button class="bs-add" data-add="${p.id}"><i class="fa-solid fa-bag-shopping"></i> Add to cart</button></div></div></article>`;
-const row=(p,r,i)=>`<article class="bs-row bs-rv" style="--d:${i*90}ms"><span class="bs-n">${r}</span><a class="bs-th" href="product.html?id=${p.id}">${imgTag(p.img,p.name,p.h)}</a>
-  <div><span class="lab">${p.label}</span><h3><a href="product.html?id=${p.id}">${p.name}</a></h3>${star(p)}</div>
+const row=(p,r,i)=>`<article class="bs-row bs-rv" style="--d:${i*90}ms"><span class="bs-n">${r}</span><a class="bs-th" href="${epUrl(p)}">${imgTag(p.img,p.name,p.h)}</a>
+  <div><span class="lab">${p.label}</span><h3><a href="${epUrl(p)}">${p.name}</a></h3>${star(p)}</div>
   <div class="price bs-price"><b>${rm(p.price)}</b><s>${rm(p.was)}</s></div>
   <div class="bs-act">${heart(p,'bs-wish')}<button class="bs-add" data-add="${p.id}"><i class="fa-solid fa-bag-shopping"></i> Add to cart</button></div></article>`;
 function heroBest(){
   const t=BEST.slice(0,3), avg=(BEST.reduce((a,p)=>a+p.rating,0)/BEST.length).toFixed(1), min=Math.min(...BEST.map(p=>p.price));
   $('#bhStats').innerHTML=`<div><b>${BEST.length}</b><span>best-selling scents</span></div><div><b>COD</b><span>pay on delivery</span></div><div><b>${rm(min)}</b><span>starting price</span></div>`;
-  const a=(p,r,c,d)=>p?`<div class="bh-a ${c}" style="--d:${d}ms"><div class="bh-f"><a class="bh-card" href="product.html?id=${p.id}" aria-label="${p.name}, number ${r} best seller">${imgTag(p.img,p.name,p.h)}</a><span class="bh-lab"><b class="n">${r}</b>${p.name}</span></div></div>`:'';
+  const a=(p,r,c,d)=>p?`<div class="bh-a ${c}" style="--d:${d}ms"><div class="bh-f"><a class="bh-card" href="${epUrl(p)}" aria-label="${p.name}, number ${r} best seller">${imgTag(p.img,p.name,p.h)}</a><span class="bh-lab"><b class="n">${r}</b>${p.name}</span></div></div>`:'';
   $('#bhArches').innerHTML=a(t[1],2,'bh-a2',350)+a(t[2],3,'bh-a3',500)+a(t[0],1,'bh-a1',150);
   $('#bhTrack').innerHTML=[...BEST,...BEST,...BEST,...BEST].map(p=>`<span>${p.name}</span><i>★</i>`).join('');
 }
@@ -1067,7 +1067,7 @@ const CFG=CONFIG; const im=(src,alt,h)=>imgTag(src,alt,h);
     const c=e.target.closest('[data-q]'); if(c){e.stopPropagation();sIn.value=c.dataset.q;renderSearch();sIn.focus();return}
     if(e.target.closest('#spAll')) return searchGo();
     const ad=e.target.closest('[data-add]'); if(ad){e.stopPropagation();closeSearch();addFromSearch(Number(ad.dataset.add));return}
-    const it=e.target.closest('[data-pid]'); if(it) location.href='product.html?id='+it.dataset.pid;
+    const it=e.target.closest('[data-pid]'); if(it) location.href=epUrlById(it.dataset.pid);
   });
   ov.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.sp-item')){e.preventDefault();e.target.click()}});
 
@@ -1083,7 +1083,7 @@ const CFG=CONFIG; const im=(src,alt,h)=>imgTag(src,alt,h);
 document.addEventListener('click',e=>{
   if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
   if(e.target.closest('a,button,input,select,textarea,label')) return;
-  const go=e.target.closest('[data-go]'); if(go){location.href='product.html?id='+go.dataset.go;return;}
+  const go=e.target.closest('[data-go]'); if(go){location.href=epUrlById(go.dataset.go);return;}
   const c=e.target.closest('.card,.up-item,.spot,.bs-pod,.bs-row,.mx-pc,.wm-card'); if(!c) return;
   const a=c.querySelector('a[href*="product.html"]'); if(a) location.href=a.getAttribute('href');
 });

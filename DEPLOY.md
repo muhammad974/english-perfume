@@ -17,6 +17,7 @@ Ye poora folder ek GitHub repo banega aur ek hi Vercel project mein jayega.
    - `ADMIN_PASSWORD` = apna strong password (kam az kam 8 characters). **Zaroori.**
    - `ADMIN_USER` = admin (chahein to koi aur naam)
    - `SESSION_SECRET` = koi lamba random text
+   - `SITE_URL` = aapki website ka address, jaise `https://englishperfume.store` (SEO ke liye zaroori, SEO_GUIDE.md dekhein)
    - `ADMIN_RECOVERY_KEY` = ek aur lamba secret, admin login page ke "Forgot password?" ke liye. Ise kahin likh kar rakhein.
    - Optional: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `WA_OWNER_NUMBER`, `CALLMEBOT_APIKEY`
 4. Deploy.

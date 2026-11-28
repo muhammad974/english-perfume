@@ -1234,10 +1234,10 @@ function renderCart(){
   const left=Math.max(0,CONFIG.freeShippingOver-t.sub), pct=Math.min(100,t.sub/CONFIG.freeShippingOver*100);
   $('#shipBar').innerHTML=n?`<div class="ship-msg"><i class="fa-solid fa-truck-fast"></i><span>${left>0?`Add <b>${rm(left)}</b> more for free shipping`:'You’ve unlocked <b>free shipping</b>'}</span></div><div class="bar"><i style="width:${pct}%"></i><em style="left:${pct}%"></em></div>`:'';
   const more=PRODUCTS.filter(p=>!cart.some(i=>i.id===p.id)).sort((a,b)=>(b.best-a.best)||(b.rating-a.rating)).slice(0,3);
-  const up=more.length?`<div class="up"><h5>You may also like</h5>${more.map(p=>`<div class="up-item"><a class="plink" href="product.html?id=${p.id}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h)}</a><div><b><a href="product.html?id=${p.id}">${p.name}</a></b><small>${rm(p.price)}</small></div><button data-add="${p.id}" aria-label="Add ${p.name} to cart"><i class="fa-solid fa-plus"></i></button></div>`).join('')}</div>`:'';
+  const up=more.length?`<div class="up"><h5>You may also like</h5>${more.map(p=>`<div class="up-item"><a class="plink" href="${epUrl(p)}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h)}</a><div><b><a href="${epUrl(p)}">${p.name}</a></b><small>${rm(p.price)}</small></div><button data-add="${p.id}" aria-label="Add ${p.name} to cart"><i class="fa-solid fa-plus"></i></button></div>`).join('')}</div>`:'';
   body.innerHTML=n?cart.map(i=>{const p=byId(i.id);return `<div class="line-item">
-      <div class="li-img"><a class="plink" href="product.html?id=${p.id}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h)}</a></div>
-      <div class="li-main"><h4><a href="product.html?id=${p.id}">${p.name}</a></h4><small>${p.label}</small><div class="qty"><button data-dec="${p.id}" aria-label="Decrease"><i class="fa-solid fa-minus"></i></button><span>${i.qty}</span><button data-inc="${p.id}" aria-label="Increase"><i class="fa-solid fa-plus"></i></button></div></div>
+      <div class="li-img"><a class="plink" href="${epUrl(p)}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h)}</a></div>
+      <div class="li-main"><h4><a href="${epUrl(p)}">${p.name}</a></h4><small>${p.label}</small><div class="qty"><button data-dec="${p.id}" aria-label="Decrease"><i class="fa-solid fa-minus"></i></button><span>${i.qty}</span><button data-inc="${p.id}" aria-label="Increase"><i class="fa-solid fa-plus"></i></button></div></div>
       <div class="line-price"><b>${rm(p.price*i.qty)}</b>${i.qty>1?`<small>${rm(p.price)} each</small>`:''}<button class="rm" data-rm="${p.id}" aria-label="Remove ${p.name}"><i class="fa-regular fa-trash-can"></i></button></div></div>`;}).join('')+up
     :`<div class="drawer-empty"><div class="de-ico"><i class="fa-solid fa-bag-shopping"></i></div><h4>Your cart is empty</h4><p>Find a scent you’ll love.</p><br><button class="btn btn-dark" id="emptyShop">Start shopping</button><div class="de-chips"><a href="#shop" data-filter="men">Men</a><a href="#shop" data-filter="women">Women</a><a href="#shop" data-filter="unisex">Unisex</a><a href="#shop" data-filter="best">Best sellers</a></div></div>`;
 }
@@ -1268,7 +1268,7 @@ function openQV(id){
     <p>${p.desc}</p><div class="notes">${p.notes.map(n=>`<span>${n}</span>`).join('')}</div>
     <p style="font-size:.8rem"><i class="fa-solid fa-truck-fast" style="color:var(--brass)"></i> Cash on Delivery available · Ships within Malaysia</p>
     <button class="btn btn-dark block" data-add="${p.id}" data-close-after>Add to Cart <i class="fa-solid fa-arrow-right-long"></i></button>
-    <a href="product.html?id=${p.id}" style="display:block;text-align:center;margin-top:14px;font-size:.9rem;text-decoration:underline;color:var(--oud)">View full details</a></div></div>`;
+    <a href="${epUrl(p)}" style="display:block;text-align:center;margin-top:14px;font-size:.9rem;text-decoration:underline;color:var(--oud)">View full details</a></div></div>`;
   openModal($('#qvModal'));
 }
 
@@ -1555,14 +1555,14 @@ function cardHTML(p, i=0){
   return `<article class="card" data-card style="--h:${p.h};--i:${i}">
     <div class="card-media">
       <div class="p-floor"></div>
-      <a class="plink" href="product.html?id=${p.id}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h,'class="p-photo"')}</a>
-      <a class="p-qv" href="product.html?id=${p.id}" aria-label="View ${p.name}"><i class="fa-regular fa-eye"></i> View product</a>
+      <a class="plink" href="${epUrl(p)}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h,'class="p-photo"')}</a>
+      <a class="p-qv" href="${epUrl(p)}" aria-label="View ${p.name}"><i class="fa-regular fa-eye"></i> View product</a>
       <div class="p-badges"><span class="sale">−${off(p)}%</span>${p.best ? '<span class="tagp">Best seller</span>' : ''}${p.luxury ? '<span class="tagp gold">Luxury</span>' : ''}</div>
       <button class="wish" data-id="${p.id}" aria-label="Add ${p.name} to wishlist"><i class="fa-regular fa-heart"></i></button>
     </div>
     <div class="card-info">
       <span class="card-cat">${p.label}</span>
-      <h3 class="card-name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+      <h3 class="card-name"><a href="${epUrl(p)}">${p.name}</a></h3>
       
       <div class="p-notes">${p.notes.slice(0,3).map(n=>`<span>${n}</span>`).join('')}</div>
       <div class="p-buy"><div class="price"><b>${rm(p.price)}</b><s>${rm(p.was)}</s></div><button class="p-add" data-add="${p.id}"><i class="fa-solid fa-plus"></i> Add</button></div>
@@ -1570,12 +1570,12 @@ function cardHTML(p, i=0){
 }
 function spotHTML(p){
   return `<article class="spot" style="--h:${p.h};--i:0">
-    <div class="spot-stage">${catFx('spot','spark')}<span class="spot-pill">Editor’s pick</span><a class="plink" href="product.html?id=${p.id}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img.replace('w=900','w=1400'),p.name,p.h,'class="spot-photo"')}</a><div class="spot-off">−${off(p)}%<small>today</small></div></div>
-    <div class="spot-info"><span class="eyebrow">${p.label}</span><h3><a href="product.html?id=${p.id}">${p.name}</a></h3>
+    <div class="spot-stage">${catFx('spot','spark')}<span class="spot-pill">Editor’s pick</span><a class="plink" href="${epUrl(p)}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img.replace('w=900','w=1400'),p.name,p.h,'class="spot-photo"')}</a><div class="spot-off">−${off(p)}%<small>today</small></div></div>
+    <div class="spot-info"><span class="eyebrow">${p.label}</span><h3><a href="${epUrl(p)}">${p.name}</a></h3>
       
       <p>${p.desc}</p><div class="notes">${p.notes.map(n=>`<span>${n}</span>`).join('')}</div>
       <div class="price"><b>${rm(p.price)}</b><s>${rm(p.was)}</s></div>
-      <div class="spot-cta"><button class="btn btn-dark" data-add="${p.id}">Add to cart <i class="fa-solid fa-arrow-right-long"></i></button><a class="btn btn-line" href="product.html?id=${p.id}">View product</a></div></div></article>`;
+      <div class="spot-cta"><button class="btn btn-dark" data-add="${p.id}">Add to cart <i class="fa-solid fa-arrow-right-long"></i></button><a class="btn btn-line" href="${epUrl(p)}">View product</a></div></div></article>`;
 }
 function spotPick(){ // Editor's pick: first luxury best seller, else any best seller / luxury, else the first product (never crashes if a product was deleted)
   return PRODUCTS.find(p=>p.luxury&&p.best)||PRODUCTS.find(p=>p.best)||PRODUCTS.find(p=>p.luxury)||PRODUCTS[0]||null;
@@ -1732,7 +1732,7 @@ init();
 document.addEventListener('click',e=>{
   if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
   if(e.target.closest('a,button,input,select,textarea,label')) return;
-  const go=e.target.closest('[data-go]'); if(go){location.href='product.html?id='+go.dataset.go;return;}
+  const go=e.target.closest('[data-go]'); if(go){location.href=epUrlById(go.dataset.go);return;}
   const c=e.target.closest('.card,.up-item,.spot,.bs-pod,.bs-row,.mx-pc,.wm-card'); if(!c) return;
   const a=c.querySelector('a[href*="product.html"]'); if(a) location.href=a.getAttribute('href');
 });

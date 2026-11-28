@@ -934,7 +934,7 @@ function card(p,i){
     <button class="wish ${on?'on':''}" data-w="${p.id}" aria-pressed="${on}" aria-label="Wishlist ${p.name}"><i class="fa-${on?'solid':'regular'} fa-heart"></i></button>
     <div class="quick"><button data-add="${p.id}">Add to cart</button></div></div>
   <div class="info"><span class="lab">${p.label}</span>
-    <h3 class="name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+    <h3 class="name"><a href="${epUrl(p)}">${p.name}</a></h3>
     
     <div class="notes">${p.notes.slice(0,3).map(n=>`<span>${n}</span>`).join('')}</div>
     <div class="price"><b>${rm(p.price)}</b><s>${rm(p.was)}</s></div></div></article>`;
@@ -1026,7 +1026,7 @@ const CFG=CONFIG; const im=(src,alt,h)=>imgTag(src,alt,h);
     const c=e.target.closest('[data-q]'); if(c){e.stopPropagation();sIn.value=c.dataset.q;renderSearch();sIn.focus();return}
     if(e.target.closest('#spAll')) return searchGo();
     const ad=e.target.closest('[data-add]'); if(ad){e.stopPropagation();closeSearch();addFromSearch(Number(ad.dataset.add));return}
-    const it=e.target.closest('[data-pid]'); if(it) location.href='product.html?id='+it.dataset.pid;
+    const it=e.target.closest('[data-pid]'); if(it) location.href=epUrlById(it.dataset.pid);
   });
   ov.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.sp-item')){e.preventDefault();e.target.click()}});
 

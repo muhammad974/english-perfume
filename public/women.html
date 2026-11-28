@@ -956,13 +956,13 @@ function openDr(o){$('#dr').classList.toggle('on',o);$('#ov').classList.toggle('
 const WOM=PRODUCTS.filter(p=>p.cat==='women'), UNI=PRODUCTS.filter(p=>p.cat==='unisex');
 const mood=p=>/rose/i.test(p.label)?'Romantic & rosy':/white|jasmine/i.test(p.label)?'Soft & elegant':/gourmand|vanilla/i.test(p.label)?'Sweet & warm':/fruit|cherry/i.test(p.label)?'Playful & fruity':p.label;
 const heart=p=>{const on=wish.includes(p.id);return `<button class="wm-wish${on?' on':''}" data-w="${p.id}" aria-pressed="${on}" aria-label="Wishlist ${p.name}"><i class="fa-${on?'solid':'regular'} fa-heart"></i></button>`};
-const feat=(p,i)=>`<article class="wm-feat wm-rv${i%2?' alt':''}"><div class="wm-ph"><div class="im"><a class="plink" href="product.html?id=${p.id}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h)}</a></div>${heart(p)}<span class="wm-off">−${off(p)}%</span></div>
-  <div class="wm-tx"><span class="wm-n">${String(i+1).padStart(2,'0')}</span><span class="wm-mood">${mood(p)}</span><h3><a href="product.html?id=${p.id}">${p.name}</a></h3>
+const feat=(p,i)=>`<article class="wm-feat wm-rv${i%2?' alt':''}"><div class="wm-ph"><div class="im"><a class="plink" href="${epUrl(p)}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h)}</a></div>${heart(p)}<span class="wm-off">−${off(p)}%</span></div>
+  <div class="wm-tx"><span class="wm-n">${String(i+1).padStart(2,'0')}</span><span class="wm-mood">${mood(p)}</span><h3><a href="${epUrl(p)}">${p.name}</a></h3>
   <p class="wm-desc">${p.desc||''}</p>
   <div class="notes">${p.notes.map(n=>`<span>${n}</span>`).join('')}</div><div class="price"><b>${rm(p.price)}</b><s>${rm(p.was)}</s></div>
-  <div class="wm-buy"><button class="wm-add" data-add="${p.id}"><i class="fa-solid fa-bag-shopping"></i> Add to cart</button><a class="wm-more" href="product.html?id=${p.id}">View details</a></div></div></article>`;
-const card=(p,i)=>`<article class="wm-card wm-rv" style="--d:${i*100}ms"><div class="im"><a class="plink" href="product.html?id=${p.id}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h)}</a>${heart(p)}<span class="wm-off">−${off(p)}%</span></div>
-  <span class="lab" style="display:block;margin-top:14px">${p.label}</span><h3><a href="product.html?id=${p.id}">${p.name}</a></h3>
+  <div class="wm-buy"><button class="wm-add" data-add="${p.id}"><i class="fa-solid fa-bag-shopping"></i> Add to cart</button><a class="wm-more" href="${epUrl(p)}">View details</a></div></div></article>`;
+const card=(p,i)=>`<article class="wm-card wm-rv" style="--d:${i*100}ms"><div class="im"><a class="plink" href="${epUrl(p)}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h)}</a>${heart(p)}<span class="wm-off">−${off(p)}%</span></div>
+  <span class="lab" style="display:block;margin-top:14px">${p.label}</span><h3><a href="${epUrl(p)}">${p.name}</a></h3>
   <div class="price"><b>${rm(p.price)}</b><s>${rm(p.was)}</s></div><button class="wm-add" data-add="${p.id}"><i class="fa-solid fa-bag-shopping"></i> Add to cart</button></article>`;
 function renderWomen(){
   if(WOM.length){const min=Math.min(...WOM.map(p=>p.price)),mx=Math.max(...WOM.map(off));
@@ -1039,7 +1039,7 @@ const CFG=CONFIG; const im=(src,alt,h)=>imgTag(src,alt,h);
     const c=e.target.closest('[data-q]'); if(c){e.stopPropagation();sIn.value=c.dataset.q;renderSearch();sIn.focus();return}
     if(e.target.closest('#spAll')) return searchGo();
     const ad=e.target.closest('[data-add]'); if(ad){e.stopPropagation();closeSearch();addFromSearch(Number(ad.dataset.add));return}
-    const it=e.target.closest('[data-pid]'); if(it) location.href='product.html?id='+it.dataset.pid;
+    const it=e.target.closest('[data-pid]'); if(it) location.href=epUrlById(it.dataset.pid);
   });
   ov.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.sp-item')){e.preventDefault();e.target.click()}});
 
@@ -1055,7 +1055,7 @@ const CFG=CONFIG; const im=(src,alt,h)=>imgTag(src,alt,h);
 document.addEventListener('click',e=>{
   if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
   if(e.target.closest('a,button,input,select,textarea,label')) return;
-  const go=e.target.closest('[data-go]'); if(go){location.href='product.html?id='+go.dataset.go;return;}
+  const go=e.target.closest('[data-go]'); if(go){location.href=epUrlById(go.dataset.go);return;}
   const c=e.target.closest('.card,.up-item,.spot,.bs-pod,.bs-row,.mx-pc,.wm-card'); if(!c) return;
   const a=c.querySelector('a[href*="product.html"]'); if(a) location.href=a.getAttribute('href');
 });

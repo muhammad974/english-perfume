@@ -798,12 +798,12 @@ function list(){
 function card(p,i){
   const on=wish.includes(p.id);
   return `<article class="card" style="--i:${Math.min(i,12)};--h:${p.h}">
-  <div class="media"><a class="plink" href="product.html?id=${p.id}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h)}</a>
+  <div class="media"><a class="plink" href="${epUrl(p)}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h)}</a>
     <div class="tags"><span class="s">−${off(p)}%</span>${p.best?'<span>Best seller</span>':''}${p.luxury?'<span class="g">Luxury</span>':''}</div>
     <button class="wish ${on?'on':''}" data-w="${p.id}" aria-pressed="${on}" aria-label="Wishlist ${p.name}"><i class="fa-${on?'solid':'regular'} fa-heart"></i></button>
     <div class="quick"><button data-add="${p.id}">Add to cart</button></div></div>
   <div class="info"><span class="lab">${p.label}</span>
-    <h3 class="name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+    <h3 class="name"><a href="${epUrl(p)}">${p.name}</a></h3>
     
     <div class="notes">${p.notes.slice(0,3).map(n=>`<span>${n}</span>`).join('')}</div>
     <div class="price"><b>${rm(p.price)}</b><s>${rm(p.was)}</s></div></div></article>`;
@@ -822,7 +822,7 @@ function badges(){
 function drawer(){
   const sub=cart.reduce((s,i)=>s+byId(i.id).price*i.qty,0),left=CONFIG.freeShippingOver-sub;
   $('#ship').innerHTML=(left>0?`Add <b>${rm(left)}</b> more for free shipping`:'<b>You get free shipping</b>')+`<div class="bar2"><i style="width:${Math.min(100,sub/CONFIG.freeShippingOver*100)}%"></i></div>`;
-  $('#dl').innerHTML=cart.length?cart.map(i=>{const p=byId(i.id);return `<div class="it"><a class="plink" href="product.html?id=${p.id}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h)}</a><div><b><a href="product.html?id=${p.id}">${p.name}</a></b><small>${rm(p.price)}</small><br><div class="qty"><button data-q="${p.id}" data-d="-1" aria-label="Less">−</button><span>${i.qty}</span><button data-q="${p.id}" data-d="1" aria-label="More">+</button></div></div><button class="ico" data-rm="${p.id}" aria-label="Remove ${p.name}"><i class="fa-regular fa-trash-can"></i></button></div>`}).join(''):'<div class="none"><i class="fa-solid fa-bag-shopping" style="font-size:2rem"></i><p style="margin-top:10px">Your cart is empty.</p></div>';
+  $('#dl').innerHTML=cart.length?cart.map(i=>{const p=byId(i.id);return `<div class="it"><a class="plink" href="${epUrl(p)}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h)}</a><div><b><a href="${epUrl(p)}">${p.name}</a></b><small>${rm(p.price)}</small><br><div class="qty"><button data-q="${p.id}" data-d="-1" aria-label="Less">−</button><span>${i.qty}</span><button data-q="${p.id}" data-d="1" aria-label="More">+</button></div></div><button class="ico" data-rm="${p.id}" aria-label="Remove ${p.name}"><i class="fa-regular fa-trash-can"></i></button></div>`}).join(''):'<div class="none"><i class="fa-solid fa-bag-shopping" style="font-size:2rem"></i><p style="margin-top:10px">Your cart is empty.</p></div>';
   $('#df').innerHTML=cart.length?`<div class="tot"><span>Subtotal</span><b>${rm(sub)}</b></div><a class="go" href="checkout.html">Continue to checkout <i class="fa-solid fa-arrow-right"></i></a>`:'';
 }
 function persist(){save(CONFIG.cartKey,cart);badges();drawer()}
@@ -894,7 +894,7 @@ const CFG=CONFIG; const im=(src,alt,h)=>imgTag(src,alt,h);
     const c=e.target.closest('[data-q]'); if(c){e.stopPropagation();sIn.value=c.dataset.q;renderSearch();sIn.focus();return}
     if(e.target.closest('#spAll')) return searchGo();
     const ad=e.target.closest('[data-add]'); if(ad){e.stopPropagation();closeSearch();addFromSearch(Number(ad.dataset.add));return}
-    const it=e.target.closest('[data-pid]'); if(it) location.href='product.html?id='+it.dataset.pid;
+    const it=e.target.closest('[data-pid]'); if(it) location.href=epUrlById(it.dataset.pid);
   });
   ov.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.sp-item')){e.preventDefault();e.target.click()}});
 
@@ -918,7 +918,7 @@ const CFG=CONFIG; const im=(src,alt,h)=>imgTag(src,alt,h);
 document.addEventListener('click',e=>{
   if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
   if(e.target.closest('a,button,input,select,textarea,label')) return;
-  const go=e.target.closest('[data-go]'); if(go){location.href='product.html?id='+go.dataset.go;return;}
+  const go=e.target.closest('[data-go]'); if(go){location.href=epUrlById(go.dataset.go);return;}
   const c=e.target.closest('.card,.up-item,.spot,.bs-pod,.bs-row,.mx-pc,.wm-card'); if(!c) return;
   const a=c.querySelector('a[href*="product.html"]'); if(a) location.href=a.getAttribute('href');
 });

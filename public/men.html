@@ -1011,14 +1011,14 @@ let cur=0, auto=!matchMedia('(prefers-reduced-motion:reduce)').matches, hov=fals
 function panel(i){
   const p=MEN[i]; cur=i; let k=0; const n=()=>`style="--i:${k++}"`;
   $$('.mx-tab').forEach((t,j)=>{t.classList.toggle('on',j===i);t.setAttribute('aria-selected',j===i)});
-  $('#mxPanel').innerHTML=`<div class="mx-ph"><a class="plink" href="product.html?id=${p.id}" aria-label="${p.name}"><img src="${p.img}" alt="${p.name}" onerror="imgFail&&imgFail(this)" data-h="${p.h}"></a>${heart(p)}<span class="mx-off">−${off(p)}%</span></div>
-   <div class="mx-info"><span class="mx-mood-tag" ${n()}>${mood(p)}</span><h3 ${n()}><a href="product.html?id=${p.id}">${p.name}</a></h3>
+  $('#mxPanel').innerHTML=`<div class="mx-ph"><a class="plink" href="${epUrl(p)}" aria-label="${p.name}"><img src="${p.img}" alt="${p.name}" onerror="imgFail&&imgFail(this)" data-h="${p.h}"></a>${heart(p)}<span class="mx-off">−${off(p)}%</span></div>
+   <div class="mx-info"><span class="mx-mood-tag" ${n()}>${mood(p)}</span><h3 ${n()}><a href="${epUrl(p)}">${p.name}</a></h3>
    <p class="mx-desc" ${n()}>${p.desc||''}</p>
    <div class="mx-notes" ${n()}>${p.notes.map(x=>`<span>${x}</span>`).join('')}</div><div class="price" ${n()}><b>${rm(p.price)}</b><s>${rm(p.was)}</s></div>
-   <div class="mx-buy" ${n()}><button class="mx-add" data-add="${p.id}"><i class="fa-solid fa-bag-shopping"></i> Add to cart</button><a class="mx-link" href="product.html?id=${p.id}">View details</a></div></div>`;
+   <div class="mx-buy" ${n()}><button class="mx-add" data-add="${p.id}"><i class="fa-solid fa-bag-shopping"></i> Add to cart</button><a class="mx-link" href="${epUrl(p)}">View details</a></div></div>`;
 }
-const pcard=(p,i)=>`<article class="mx-pc mx-rv" style="--d:${i*100}ms"><div class="im"><a class="plink" href="product.html?id=${p.id}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h)}</a>${heart(p)}</div>
-  <span class="lab" style="display:block;margin-top:12px">${p.label}</span><h3><a href="product.html?id=${p.id}">${p.name}</a></h3>
+const pcard=(p,i)=>`<article class="mx-pc mx-rv" style="--d:${i*100}ms"><div class="im"><a class="plink" href="${epUrl(p)}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h)}</a>${heart(p)}</div>
+  <span class="lab" style="display:block;margin-top:12px">${p.label}</span><h3><a href="${epUrl(p)}">${p.name}</a></h3>
   <div class="mx-row"><div class="price"><b>${rm(p.price)}</b><s>${rm(p.was)}</s></div><button class="mx-add" data-add="${p.id}" aria-label="Add ${p.name} to cart"><i class="fa-solid fa-bag-shopping"></i> Add</button></div></article>`;
 function renderMen(){
   if(MEN.length){const min=Math.min(...MEN.map(p=>p.price)),mx=Math.max(...MEN.map(off));
@@ -1027,7 +1027,7 @@ function renderMen(){
     $('#mxTabs').innerHTML=MEN.map((p,i)=>`<button class="mx-tab" role="tab" data-mx="${i}" aria-selected="false"><i class="fa-solid ${MICON[mood(p)]||'fa-droplet'}"></i><span><b>${mood(p)}</b><small>${p.name}</small></span></button>`).join('');
     panel(0);
     const WHEN=[['fa-briefcase','The office','Clean and composed for long days at the desk.',/fresh/i],['fa-champagne-glasses','Evenings out','Deep and magnetic after dark.',/bold/i],['fa-sun','Weekends','Warm, relaxed and easy to wear.',/warm/i]];
-    $('#mxWhen').innerHTML=WHEN.map(([ic,t,d,re],i)=>{const p=MEN.find(x=>re.test(mood(x)));return p?`<div class="mx-oc mx-rv" style="--d:${i*100}ms"><i class="fa-solid ${ic}"></i><h3>${t}</h3><p>${d}</p><a href="product.html?id=${p.id}">Try ${p.name} <i class="fa-solid fa-arrow-right-long" style="margin:0;font-size:.9rem"></i></a></div>`:''}).join('');
+    $('#mxWhen').innerHTML=WHEN.map(([ic,t,d,re],i)=>{const p=MEN.find(x=>re.test(mood(x)));return p?`<div class="mx-oc mx-rv" style="--d:${i*100}ms"><i class="fa-solid ${ic}"></i><h3>${t}</h3><p>${d}</p><a href="${epUrl(p)}">Try ${p.name} <i class="fa-solid fa-arrow-right-long" style="margin:0;font-size:.9rem"></i></a></div>`:''}).join('');
   }
   $('#mnGrid').innerHTML=UNI.map(pcard).join('');
   if(!UNI.length) $('#mnUni').hidden=true;
@@ -1102,7 +1102,7 @@ const CFG=CONFIG; const im=(src,alt,h)=>imgTag(src,alt,h);
     const c=e.target.closest('[data-q]'); if(c){e.stopPropagation();sIn.value=c.dataset.q;renderSearch();sIn.focus();return}
     if(e.target.closest('#spAll')) return searchGo();
     const ad=e.target.closest('[data-add]'); if(ad){e.stopPropagation();closeSearch();addFromSearch(Number(ad.dataset.add));return}
-    const it=e.target.closest('[data-pid]'); if(it) location.href='product.html?id='+it.dataset.pid;
+    const it=e.target.closest('[data-pid]'); if(it) location.href=epUrlById(it.dataset.pid);
   });
   ov.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.sp-item')){e.preventDefault();e.target.click()}});
 
@@ -1118,7 +1118,7 @@ const CFG=CONFIG; const im=(src,alt,h)=>imgTag(src,alt,h);
 document.addEventListener('click',e=>{
   if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
   if(e.target.closest('a,button,input,select,textarea,label')) return;
-  const go=e.target.closest('[data-go]'); if(go){location.href='product.html?id='+go.dataset.go;return;}
+  const go=e.target.closest('[data-go]'); if(go){location.href=epUrlById(go.dataset.go);return;}
   const c=e.target.closest('.card,.up-item,.spot,.bs-pod,.bs-row,.mx-pc,.wm-card'); if(!c) return;
   const a=c.querySelector('a[href*="product.html"]'); if(a) location.href=a.getAttribute('href');
 });

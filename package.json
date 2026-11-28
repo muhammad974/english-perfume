@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "reset-admin": "node reset-admin.js"
+    "reset-admin": "node reset-admin.js",
+    "build": "node scripts/build.js"
   },
   "dependencies": {
     "express": "^4.21.2",

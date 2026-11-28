@@ -45,6 +45,9 @@ async function loadCatalog(fresh) {
       if (c.products.some(x => Number(x.id) === Number(p.id) && x.name === p.name || x.name === p.name || (p.img && x.img === p.img))) continue;
       c.products.push({ ...JSON.parse(JSON.stringify(p)), id: next++ });
     }
+    for (const p of file.products) { // also fill in the brand of products that were saved without one (used for Google product data)
+      const x = c.products.find(q => q.name === p.name); if (x && !x.brand && p.brand) x.brand = p.brand;
+    }
     c.version = file.version; await store.set('catalog', c);
   }
   applyCatalog(c); return c;
@@ -167,7 +170,9 @@ function stats() {
 async function notifyTelegram(o) {
   const t = process.env.TELEGRAM_BOT_TOKEN, c = process.env.TELEGRAM_CHAT_ID;
   if (!t || !c) return;
-  const text = `New order ${o.orderNo}\n${o.customer.name} | ${o.customer.phone}\n${o.shipping.city}, ${o.shipping.state}\n` +
+  const a = o.shipping || {};
+  const text = `New order ${o.orderNo}\nName: ${o.customer.name}\nPhone: ${o.customer.phone}\nEmail: ${o.customer.email}\nAddress: ${a.address}, ${a.city}, ${a.state}\n` +
+    (o.notes ? `Customer note: ${o.notes}\n` : '') + '\n' +
     o.items.map(i => `${i.qty} x ${i.name}`).join('\n') + `\nTotal: RM ${o.totals.total} (cash on delivery)`;
   try {
     await fetch(`https://api.telegram.org/bot${t}/sendMessage`, {
@@ -294,13 +299,13 @@ app.post('/api/track', async (req, res) => {
 });
 
 /* ===== ADMIN PRODUCT MANAGEMENT (authenticated) ===== */
-const cleanImgs=a=>Array.isArray(a)?a.map(u=>str(u,2000)).filter(u=>/^(\/|https?:\/\/)/.test(u)).slice(0,8):[];
+const cleanImgs=a=>Array.isArray(a)?a.map(u=>str(u,2000)).filter(u=>/^(\/|https?:\/\/|images\/)/.test(u)).slice(0,8):[];
 
 app.get('/api/admin/products', auth, async (req,res)=>{ await loadCatalog(true); res.json({products:CATALOG.products, config:CATALOG.config}); });
 app.post('/api/admin/products', auth, async (req,res)=>{await loadCatalog(true);
   const b=req.body||{}; const name=str(b.name,120); const price=Number(b.price), id=Math.max(0,...CATALOG.products.map(p=>Number(p.id)||0))+1;
   if(name.length<2 || !Number.isFinite(price) || price<0) return res.status(400).json({error:'Product name and valid price are required.'});
-  const p={id,name,price,cat:['men','women','unisex'].includes(b.cat)?b.cat:'unisex',label:str(b.label,100),img:str(b.img,2000),was:Number(b.was)||0,active:b.active!==false,stock:Math.max(0,Math.floor(Number(b.stock)||0)),sku:str(b.sku,40),description:str(b.description,1000),best:!!b.best,luxury:!!b.luxury};
+  const p={id,name,price,cat:['men','women','unisex'].includes(b.cat)?b.cat:'unisex',brand:str(b.brand,60),label:str(b.label,100),img:str(b.img,2000),was:Number(b.was)||0,active:b.active!==false,stock:Math.max(0,Math.floor(Number(b.stock)||0)),sku:str(b.sku,40),description:str(b.description,1000),best:!!b.best,luxury:!!b.luxury};
   { const im=cleanImgs(b.images); if(im.length){p.images=im;p.img=im[0];} }
   CATALOG.products.push(p); await persistCatalog(); res.status(201).json({product:p});
 });
@@ -310,7 +315,7 @@ app.put('/api/admin/products/:id', auth, async (req,res)=>{await loadCatalog(tru
   if(b.price!==undefined){const v=Number(b.price);if(!Number.isFinite(v)||v<0)return res.status(400).json({error:'Invalid price'});p.price=v;}
   if(b.cat!==undefined)p.cat=['men','women','unisex'].includes(b.cat)?b.cat:'unisex';
   if(b.was!==undefined)p.was=Math.max(0,Number(b.was)||0);
-  for(const k of ['label','img','sku','description'])if(b[k]!==undefined)p[k]=str(b[k], k==='img'?2000:k==='description'?1000:120);
+  for(const k of ['label','img','sku','description','brand'])if(b[k]!==undefined)p[k]=str(b[k], k==='img'?2000:k==='description'?1000:120);
   if(b.active!==undefined)p.active=!!b.active;if(b.images!==undefined){const im=cleanImgs(b.images); if(im.length){p.images=im;p.img=im[0];} else {delete p.images;p.img='';}} if(b.best!==undefined)p.best=!!b.best;if(b.luxury!==undefined)p.luxury=!!b.luxury;if(b.stock!==undefined)p.stock=Math.max(0,Math.floor(Number(b.stock)||0));
   await persistCatalog();res.json({product:p});
 });
@@ -332,7 +337,8 @@ app.post('/api/admin/login', async (req, res) => {
   const A = await getAdmin();
   if (!A) return res.status(503).json({ error: 'Admin is not set up yet. Add ADMIN_PASSWORD in the Vercel environment variables and redeploy.' });
   const pwOk = checkPw(typeof password === 'string' ? password : '', A.hash);
-  if (!(typeof user === 'string' && user === A.user && pwOk)) return res.status(401).json({ error: 'Wrong username or password.' });
+  const same = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+  if (!(typeof user === 'string' && same(user, A.user) && pwOk)) return res.status(401).json({ error: 'Wrong username or password.' });
   setSession(req, res, A);
   res.json({ ok: true, user });
 });
@@ -348,7 +354,8 @@ app.post('/api/admin/reset', async (req, res) => {
   const h = v => crypto.createHash('sha256').update(String(v)).digest();
   if (typeof key !== 'string' || !crypto.timingSafeEqual(h(key), h(rk))) return res.status(401).json({ error: 'Wrong recovery key.' });
   if (typeof next !== 'string' || next.length < 8) return res.status(400).json({ error: 'New password must be at least 8 characters.' });
-  const A = (await getAdmin()) || { user: process.env.ADMIN_USER || 'admin' };
+  const A = (await getAdmin()) || { user: 'admin' };
+  if (process.env.ADMIN_USER && process.env.ADMIN_USER.trim()) A.user = process.env.ADMIN_USER.trim();
   A.hash = hashPw(next);
   await store.set('admin', A); // old login cookies stop working automatically
   res.json({ ok: true, user: A.user });
@@ -361,7 +368,7 @@ app.get('/api/admin/orders', auth, async (req, res) => {
   if (status && STATUSES.includes(status)) list = list.filter(o => o.status === status);
   if (q) {
     const s = String(q).toLowerCase().slice(0, 80);
-    list = list.filter(o => `${o.orderNo} ${o.customer.name} ${o.customer.phone} ${o.customer.email}`.toLowerCase().includes(s));
+    list = list.filter(o => `${o.orderNo} ${o.customer.name} ${o.customer.phone} ${o.customer.email} ${o.shipping.address} ${o.shipping.city} ${o.shipping.state}`.toLowerCase().includes(s));
   }
   res.json({ orders: list.slice(0, 500), counts: counts(), stats: stats() });
 });
@@ -418,6 +425,122 @@ app.post('/api/admin/password', auth, async (req, res) => {
 /* ===== static files ===== */
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin', 'index.html')));
 app.use('/admin', express.static(path.join(__dirname, 'admin'), { index: false })); // admin.css + admin.js
+/* ===================== SEO: sitemap, robots, product pages ===================== */
+const SEO_PAGES = [['/', 1], ['/shop.html', 0.9], ['/men.html', 0.8], ['/women.html', 0.8], ['/bestsellers.html', 0.8],
+  ['/customer-support.html', 0.5], ['/shipping-policy.html', 0.4], ['/policies.html', 0.3]];
+const CAT_PAGE = { men: ["Men's Perfumes", '/men.html'], women: ["Women's Perfumes", '/women.html'], unisex: ['Unisex Fragrances', '/shop.html?f=unisex'] };
+const he = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const ld = o => JSON.stringify(o).replace(/</g, '\\u003c');
+const money = n => (Number.isInteger(Number(n)) ? String(Number(n)) : Number(n).toFixed(2));
+const slugify = v => String(v || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/&/g, ' and ')
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'perfume';   // same rule as js/ep-catalog.js
+const productPath = p => '/' + slugify(p.name) + '-p' + p.id;
+function siteUrl(req) {
+  const env = (process.env.SITE_URL || '').trim().replace(/\/+$/, '');
+  if (env) return env;
+  const proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0];
+  return proto + '://' + (req.headers['x-forwarded-host'] || req.headers.host || 'localhost');
+}
+const absUrl = (site, u) => (/^https?:\/\//i.test(u) ? u : site + (String(u).startsWith('/') ? '' : '/') + u);
+const productImages = p => (p.images && p.images.length ? p.images : [p.img]).filter(Boolean);
+function cut(text, n) { const t = String(text).replace(/\s+/g, ' ').trim(); if (t.length <= n) return t; const c = t.slice(0, n - 1); return c.slice(0, c.lastIndexOf(' ') > 80 ? c.lastIndexOf(' ') : c.length).replace(/[,;:.\- ]+$/, '') + '…'; }
+
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain').set('Cache-Control', 'public, max-age=0, s-maxage=3600').send(
+    ['User-agent: *', 'Allow: /', 'Disallow: /admin', 'Disallow: /api/admin/', 'Disallow: /api/orders', 'Disallow: /api/track',
+      'Disallow: /checkout.html', 'Disallow: /track.html', '', 'Sitemap: ' + siteUrl(req) + '/sitemap.xml', ''].join('\n'));
+});
+app.get('/sitemap.xml', async (req, res) => {
+  await loadCatalog();
+  const site = siteUrl(req);
+  const urls = SEO_PAGES.map(([u, pr]) => `<url><loc>${he(site + u)}</loc><changefreq>weekly</changefreq><priority>${pr}</priority></url>`);
+  for (const p of CATALOG.products.filter(x => x.active !== false)) {
+    const imgs = productImages(p).map(i => `<image:image><image:loc>${he(absUrl(site, i))}</image:loc><image:title>${he(p.name)}</image:title></image:image>`).join('');
+    urls.push(`<url><loc>${he(site + productPath(p))}</loc><changefreq>weekly</changefreq><priority>0.7</priority>${imgs}</url>`);
+  }
+  res.type('application/xml').set('Cache-Control', 'public, max-age=0, s-maxage=900').send(
+    '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n' + urls.join('\n') + '\n</urlset>\n');
+});
+
+let tplCache = { at: 0, html: '' };
+async function productTemplate(req) {
+  if (tplCache.html && Date.now() - tplCache.at < 600e3) return tplCache.html;
+  let html = null;
+  try { html = fs.readFileSync(path.join(__dirname, 'public', 'product.html'), 'utf8'); } catch { /* not bundled: fetch it below */ }
+  if (!html) {
+    const host = req.headers['x-forwarded-host'] || req.headers.host, proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0];
+    const r = await fetch(proto + '://' + host + '/product.html');
+    if (!r.ok) throw new Error('Product template not found');
+    html = await r.text();
+  }
+  tplCache = { at: Date.now(), html }; return html;
+}
+function productSeo(req, p) {
+  const site = siteUrl(req), url = site + productPath(p), brand = p.brand || 'English Perfume';
+  const imgs = productImages(p).map(i => absUrl(site, i));
+  const about = (p.description || p.label || '').replace(/\s+/g, ' ').trim();
+  const title = cut(p.name + ' | English Perfume Malaysia', 62);
+  const aboutText = about && about.toLowerCase().startsWith(String(p.name).toLowerCase()) ? about.slice(String(p.name).length).replace(/^[\s:,.\-–]+/, '') : about;
+  const desc = cut(`Buy ${p.name} online in Malaysia for RM ${money(p.price)}${p.was > p.price ? ' (was RM ' + money(p.was) + ')' : ''}. Cash on delivery.${aboutText ? ' ' + aboutText : ''}`, 158);
+  const inStock = !(p.stock !== undefined && p.stock !== null && Number(p.stock) <= 0 && p.stock !== '');
+  const cat = CAT_PAGE[p.cat] || CAT_PAGE.unisex;
+  const product = {
+    '@context': 'https://schema.org', '@type': 'Product', '@id': url + '#product', name: p.name, image: imgs, description: desc,
+    sku: p.sku || 'EP-' + p.id, brand: { '@type': 'Brand', name: brand }, category: cat[0],
+    offers: {
+      '@type': 'Offer', url, priceCurrency: 'MYR', price: Number(p.price).toFixed(2),
+      priceValidUntil: new Date(Date.now() + 365 * 864e5).toISOString().slice(0, 10),
+      availability: 'https://schema.org/' + (inStock ? 'InStock' : 'OutOfStock'), itemCondition: 'https://schema.org/NewCondition',
+      seller: { '@type': 'Organization', name: 'English Perfume' },
+      shippingDetails: {
+        '@type': 'OfferShippingDetails',
+        shippingRate: { '@type': 'MonetaryAmount', value: Number(p.price) >= freeShippingOver ? 0 : deliveryFee, currency: 'MYR' },
+        shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'MY' },
+        deliveryTime: { '@type': 'ShippingDeliveryTime', transitTime: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 5, unitCode: 'DAY' } }
+      }
+    }
+  };
+  const crumbs = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: site + '/' },
+    { '@type': 'ListItem', position: 2, name: cat[0], item: site + cat[1] },
+    { '@type': 'ListItem', position: 3, name: p.name, item: url }] };
+  return `<!--SEO-START-->
+<title>${he(title)}</title>
+<meta name="description" content="${he(desc)}">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<link rel="canonical" href="${he(url)}">
+<meta property="og:type" content="product">
+<meta property="og:site_name" content="English Perfume">
+<meta property="og:locale" content="en_MY">
+<meta property="og:title" content="${he(title)}">
+<meta property="og:description" content="${he(desc)}">
+<meta property="og:url" content="${he(url)}">
+${imgs[0] ? `<meta property="og:image" content="${he(imgs[0])}">\n<meta property="og:image:alt" content="${he(p.name)}">` : ''}
+<meta property="product:price:amount" content="${Number(p.price).toFixed(2)}">
+<meta property="product:price:currency" content="MYR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${he(title)}">
+<meta name="twitter:description" content="${he(desc)}">
+${imgs[0] ? `<link rel="preload" as="image" href="${he(imgs[0])}" fetchpriority="high">` : ''}
+<script type="application/ld+json">${ld(product)}</script>
+<script type="application/ld+json">${ld(crumbs)}</script>
+<!--SEO-END-->`;
+}
+const notFoundPage = () => '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Page not found | English Perfume</title></head><body style="font-family:Georgia,serif;text-align:center;padding:12vh 20px;color:#2b2220;background:#faf8f5"><h1 style="font-weight:400">This page could not be found</h1><p><a href="/" style="color:#5b2c3f">Go to the English Perfume home page</a> or <a href="/shop.html" style="color:#5b2c3f">browse all perfumes</a>.</p></body></html>';
+
+// Clean product address, e.g. /dior-sauvage-edp-for-men-100ml-p11 (any old or wrong slug is redirected to the right one)
+app.get(/^\/([a-z0-9-]+)-p(\d+)$/, async (req, res) => {
+  await loadCatalog();
+  const p = PRODUCTS.get(Number(req.params[1]));
+  if (!p || p.active === false) return res.status(404).set('X-Robots-Tag', 'noindex').type('html').send(notFoundPage());
+  if (req.path !== productPath(p)) return res.redirect(301, productPath(p));
+  let html = await productTemplate(req);
+  html = html.replace(/<!--SEO-START-->[\s\S]*?<!--SEO-END-->/g, '').replace(/<title>[\s\S]*?<\/title>/i, '')
+    .replace(/<meta name="description"[^>]*>/i, '').replace(/<meta name="robots"[^>]*>/i, '')
+    .replace('</head>', productSeo(req, p) + '\n</head>');
+  res.set({ 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=0, s-maxage=300, stale-while-revalidate=600' }).send(html);
+});
+
 // product photos uploaded from the admin panel are kept in the store (the others are plain files in /images/products)
 app.get('/images/products/:name', async (req, res, next) => {
   if (!/^[a-z0-9_-]+\.(jpg|png|webp)$/i.test(req.params.name)) return next();
@@ -425,6 +548,23 @@ app.get('/images/products/:name', async (req, res, next) => {
   if (!im) return next();
   res.set({ 'Content-Type': im.t, 'Cache-Control': 'public, max-age=31536000, immutable' });
   res.send(Buffer.from(im.d, 'base64'));
+});
+// Open /api/health to see what is wrong (shows only yes/no, never any secret)
+app.get('/api/health', async (req, res) => {
+  const has = n => !!process.env[n];
+  const out = {
+    store: store.mode,
+    variables: {
+      KV_or_UPSTASH_url: has('KV_REST_API_URL') || has('UPSTASH_REDIS_REST_URL'),
+      KV_or_UPSTASH_token: has('KV_REST_API_TOKEN') || has('UPSTASH_REDIS_REST_TOKEN'),
+      REDIS_URL: has('REDIS_URL'),
+      ADMIN_PASSWORD: has('ADMIN_PASSWORD'), ADMIN_USER: has('ADMIN_USER'),
+      SESSION_SECRET: has('SESSION_SECRET'), ADMIN_RECOVERY_KEY: has('ADMIN_RECOVERY_KEY')
+    }
+  };
+  try { await store.set('health', { at: new Date().toISOString() }); out.database = 'working'; out.adminAccountCreated = !!(await store.get('admin')); const ol = await store.hall('orders'); out.ordersInDatabase = ol.length; out.lastOrderNo = ol.map(o => o.orderNo).sort().pop() || null; }
+  catch (e) { out.database = 'NOT working: ' + store.safeMsg(e); }
+  res.set('Cache-Control', 'no-store').json(out);
 });
 // Vercel Cron calls this once a day so the free database never goes idle
 app.get('/api/keepalive', async (req, res) => {
@@ -436,6 +576,8 @@ app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] })
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
   if (err.type !== 'entity.parse.failed' && err.type !== 'entity.too.large') console.error(err);
+  if (err.code === 'NO_DB') return res.status(503).json({ error: err.message });
+  if (/^Redis:/.test(err.message || '') || err.cause) return res.status(503).json({ error: 'Database problem: ' + store.safeMsg(err) + '. Check the database variables in Vercel and Redeploy.' });
   res.status(err.status && err.status < 500 ? err.status : 500).json({ error: err.status && err.status < 500 ? 'Invalid request' : 'Server error' });
 });
 

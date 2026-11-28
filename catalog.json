@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "config": {
     "deliveryFee": 8,
     "freeShippingOver": 150
@@ -94,7 +94,14 @@
       "label": "Fresh Spicy · Citrus · Amber",
       "img": "/images/products/dior-sauvage-edp-100ml.jpg",
       "description": "Dior Sauvage Eau de Parfum for men, 100ml. Fresh and spicy with bergamot, Sichuan pepper, lavender, star anise, vanilla and ambroxan. Strong sillage and around 8 hours of longevity. 100% authentic.",
-      "active": true
+      "active": true,
+      "brand": "Dior",
+      "images": [
+        "/images/products/dior-sauvage-edp-100ml.jpg",
+        "/images/products/11-2.jpg",
+        "/images/products/11-3.jpg",
+        "/images/products/11-4.jpg"
+      ]
     },
     {
       "id": 12,
@@ -107,7 +114,8 @@
       "description": "Jean Paul Gaultier Le Male Elixir 100ml for men. A rich, warm and intense fragrance with lavender, mint, vanilla, honey and tonka. 100% authentic.",
       "active": true,
       "best": true,
-      "luxury": true
+      "luxury": true,
+      "brand": "Jean Paul Gaultier"
     },
     {
       "id": 13,
@@ -120,7 +128,8 @@
       "description": "Dior Fahrenheit Eau de Toilette for men, 100ml. 100% authentic.",
       "active": true,
       "best": true,
-      "luxury": false
+      "luxury": false,
+      "brand": "Dior"
     },
     {
       "id": 14,
@@ -133,7 +142,8 @@
       "description": "Dior J'adore Eau de Parfum for women, 100ml. 100% authentic.",
       "active": true,
       "best": true,
-      "luxury": false
+      "luxury": false,
+      "brand": "Dior"
     },
     {
       "id": 15,
@@ -146,7 +156,8 @@
       "description": "YSL Libre Eau de Parfum Intense for women, 90ml. 100% authentic.",
       "active": true,
       "best": true,
-      "luxury": true
+      "luxury": true,
+      "brand": "Yves Saint Laurent"
     },
     {
       "id": 16,
@@ -159,7 +170,8 @@
       "description": "Dior Sauvage Elixir Eau de Parfum for men, 100ml. 100% authentic.",
       "active": true,
       "best": true,
-      "luxury": true
+      "luxury": true,
+      "brand": "Dior"
     },
     {
       "id": 17,
@@ -172,7 +184,8 @@
       "description": "Hugo Boss Hugo Man Eau de Toilette for men, 150ml. 100% authentic.",
       "active": true,
       "best": false,
-      "luxury": false
+      "luxury": false,
+      "brand": "Hugo Boss"
     },
     {
       "id": 18,
@@ -185,7 +198,8 @@
       "description": "Bvlgari Man In Black Eau de Parfum for men, 100ml. 100% authentic.",
       "active": true,
       "best": false,
-      "luxury": false
+      "luxury": false,
+      "brand": "Bvlgari"
     },
     {
       "id": 19,
@@ -198,7 +212,8 @@
       "description": "Tom Ford Oud Wood Eau de Parfum, unisex, 100ml. 100% authentic.",
       "active": true,
       "best": false,
-      "luxury": true
+      "luxury": true,
+      "brand": "Tom Ford"
     },
     {
       "id": 20,
@@ -211,7 +226,8 @@
       "description": "Louis Vuitton Imagination Eau de Parfum for men, 100ml. 100% authentic.",
       "active": true,
       "best": false,
-      "luxury": true
+      "luxury": true,
+      "brand": "Louis Vuitton"
     }
   ]
 }

@@ -561,10 +561,11 @@ const im=(src,alt,h,v,x='')=>`<img src="${src}" alt="${String(alt).replace(/&/g,
 const rm=n=>`${CFG.currency} ${Number(n).toLocaleString('en-MY',{minimumFractionDigits:Number.isInteger(n)?0:2,maximumFractionDigits:2})}`;
 const $=(s,c=document)=>c.querySelector(s),$$=(s,c=document)=>[...c.querySelectorAll(s)];
 const byId=i=>PRODUCTS.find(p=>p.id===Number(i));
-const p=byId(new URLSearchParams(location.search).get('id'))||PRODUCTS[0];
+const p=byId(new URLSearchParams(location.search).get('id')||(location.pathname.match(/-p(\d+)\/?$/)||[])[1])||PRODUCTS[0];
+if(new URLSearchParams(location.search).get('id')&&window.epUrl&&history.replaceState)history.replaceState(null,'',epUrl(p));
 const imgs=gal(p),N=imgs.length,off=Math.round((1-p.price/p.was)*100);
 const CATN={men:"Men's Perfumes",women:"Women's Perfumes",unisex:'Unisex Fragrances'};
-document.title=`${p.name} | English Perfume`;$('#metaDesc').content=`${p.name} – ${p.desc} Cash on Delivery across Malaysia.`;
+if(!document.querySelector('link[rel=canonical]')){document.title=`${p.name} | English Perfume`;const md=$('#metaDesc')||document.querySelector('meta[name=description]');if(md)md.content=`${p.name} – ${p.desc} Cash on Delivery across Malaysia.`;}
 const stars='★'.repeat(Math.round(p.rating))+'☆'.repeat(5-Math.round(p.rating));
 const related=[...PRODUCTS.filter(x=>x.id!==p.id&&x.cat===p.cat),...PRODUCTS.filter(x=>x.id!==p.id&&x.cat!==p.cat)].slice(0,4);
 $('#app').innerHTML=`
@@ -590,7 +591,7 @@ $('#app').innerHTML=`
   <details><summary>Care &amp; returns</summary><p>Store in a cool, dry place away from direct sunlight. If your parcel arrives damaged, message us on WhatsApp and we will sort it out.</p></details>
  </div>
 </section>
-<section class="rel"><h2>You may also like</h2><div class="grid">${related.map(r=>`<a class="card" href="product.html?id=${r.id}"><div class="im">${im(gal(r)[0],r.name,r.h,0,'loading="lazy"')}</div><h3>${r.name}</h3><p>${r.label}</p><p><b>${rm(r.price)}</b></p></a>`).join('')}</div></section>
+<section class="rel"><h2>You may also like</h2><div class="grid">${related.map(r=>`<a class="card" href="${epUrl(r)}"><div class="im">${im(gal(r)[0],r.name,r.h,0,'loading="lazy"')}</div><h3>${r.name}</h3><p>${r.label}</p><p><b>${rm(r.price)}</b></p></a>`).join('')}</div></section>
 <div class="bar"><b>${rm(p.price)}</b><button class="btn btn-main" id="add2"><i class="fa-solid fa-bag-shopping"></i> Add to cart</button></div>`;
 /* gallery */
 let cur=0;const main=$('#main'),stage=$('#stage');
@@ -666,7 +667,7 @@ $('#add').onclick=()=>add();$('#add2').onclick=()=>add();$('#buy').onclick=()=>a
     const c=e.target.closest('[data-q]'); if(c){sIn.value=c.dataset.q;renderSearch();sIn.focus();return}
     if(e.target.closest('#spAll')) return searchGo();
     const ad=e.target.closest('[data-add]'); if(ad){e.stopPropagation();closeSearch();addFromSearch(Number(ad.dataset.add));return}
-    const it=e.target.closest('[data-pid]'); if(it) location.href='product.html?id='+it.dataset.pid;
+    const it=e.target.closest('[data-pid]'); if(it) location.href=epUrlById(it.dataset.pid);
   });
   ov.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.sp-item')){e.preventDefault();e.target.click()}});
 
