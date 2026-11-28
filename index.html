@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#faf8f5">
 <title>English Perfume | Discover Your Signature Scent</title>
+<script src="js/ep-catalog.js"></script>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="theme-color" content="#5b2c3f">
+
 <meta name="description" content="English Perfume – premium fragrances for men and women. Cash on Delivery across Malaysia.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -850,6 +858,16 @@ footer.ft{position:relative;overflow:hidden;background:linear-gradient(180deg,va
 @media (max-width:900px){.ft-copy .ft-credit,.ft-copy .ft-top{grid-column:auto}}
 @media (max-width:700px){.wa{right:14px;bottom:16px;width:54px;height:54px;font-size:1.75rem}.to-top{bottom:80px}.wa-tip{display:none}}
 @media (prefers-reduced-motion:reduce){.wa::before{animation:none}}
+
+/* page links */
+.menu a[aria-current="page"]{color:var(--oud)}
+.menu a[aria-current="page"]::after{transform:scaleX(1);transform-origin:left}
+.sec-more{text-align:center;margin-top:44px}
+
+/* product links */
+a.plink{display:contents}
+.card,.up-item,.spot,.bs-pod,.bs-row,.mx-pc,.wm-card,.sp-item{cursor:pointer}
+.line-item h4 a:hover,.up-item b a:hover,.spot-info h3 a:hover{color:var(--oud)}
 </style>
 
 </head>
@@ -880,10 +898,10 @@ footer.ft{position:relative;overflow:hidden;background:linear-gradient(180deg,va
     <div class="nav-l">
       <button class="ico burger" id="burger" aria-label="Open menu"><i class="fa-solid fa-bars-staggered"></i></button>
       <nav class="menu" aria-label="Main">
-        <a href="#shop" data-filter="all">Shop all</a>
-        <a href="#shop" data-filter="men">Men</a>
-        <a href="#shop" data-filter="women">Women</a>
-        <a href="#shop" data-filter="best">Best sellers</a>
+        <a href="shop.html">Shop all</a>
+        <a href="men.html">Men</a>
+        <a href="women.html">Women</a>
+        <a href="bestsellers.html">Best sellers</a>
       </nav>
     </div>
     <a href="#home" class="logo" aria-label="English Perfume home">English<small>PERFUME</small></a>
@@ -907,20 +925,19 @@ footer.ft{position:relative;overflow:hidden;background:linear-gradient(180deg,va
     <button class="m-search" id="mobSearch" type="button" style="--i:1"><i class="fa-solid fa-magnifying-glass"></i> Search fragrances…</button>
     <p class="m-label" style="--i:2">Shop by category</p>
     <div class="m-tiles" style="--i:3">
-      <a class="m-tile" href="#shop" data-filter="men" style="--c1:#2c5068;--c2:#0f2230"><span class="ti"><i class="fa-solid fa-mars"></i></span><b>Men</b><small>Bold · Woody · Fresh</small></a>
-      <a class="m-tile" href="#shop" data-filter="women" style="--c1:#e08d9b;--c2:#b4576a"><span class="ti"><i class="fa-solid fa-venus"></i></span><b>Women</b><small>Floral · Soft · Radiant</small></a>
-      <a class="m-tile" href="#shop" data-filter="unisex" style="--c1:#c9a46a;--c2:#8a6a2a"><span class="ti"><i class="fa-solid fa-leaf"></i></span><b>Unisex</b><small>Modern · Balanced</small></a>
-      <a class="m-tile" href="#shop" data-filter="luxury" style="--c1:#6e3550;--c2:#2b1520"><span class="ti"><i class="fa-solid fa-crown"></i></span><b>Luxury</b><small>Rare · Rich · Refined</small></a>
+      <a class="m-tile" href="men.html" style="--c1:#2c5068;--c2:#0f2230"><span class="ti"><i class="fa-solid fa-mars"></i></span><b>Men</b><small>Bold · Woody · Fresh</small></a>
+      <a class="m-tile" href="women.html" style="--c1:#e08d9b;--c2:#b4576a"><span class="ti"><i class="fa-solid fa-venus"></i></span><b>Women</b><small>Floral · Soft · Radiant</small></a>
+      <a class="m-tile" href="shop.html?f=unisex" style="--c1:#c9a46a;--c2:#8a6a2a"><span class="ti"><i class="fa-solid fa-leaf"></i></span><b>Unisex</b><small>Modern · Balanced</small></a>
+      <a class="m-tile" href="shop.html?f=luxury" style="--c1:#6e3550;--c2:#2b1520"><span class="ti"><i class="fa-solid fa-crown"></i></span><b>Luxury</b><small>Rare · Rich · Refined</small></a>
     </div>
     <nav class="m-links" style="--i:4" aria-label="Main">
       <a href="#home"><span class="li"><i class="fa-solid fa-house"></i></span>Home<i class="fa-solid fa-arrow-right ar"></i></a>
-      <a href="#shop" data-filter="all"><span class="li"><i class="fa-solid fa-bag-shopping"></i></span>Shop All<i class="fa-solid fa-arrow-right ar"></i></a>
-      <a href="#shop" data-filter="best"><span class="li"><i class="fa-solid fa-fire"></i></span>Best Sellers<i class="fa-solid fa-arrow-right ar"></i></a>
-      <a href="#reviews"><span class="li"><i class="fa-solid fa-star"></i></span>Reviews<i class="fa-solid fa-arrow-right ar"></i></a>
+      <a href="shop.html"><span class="li"><i class="fa-solid fa-bag-shopping"></i></span>Shop All<i class="fa-solid fa-arrow-right ar"></i></a>
+      <a href="bestsellers.html"><span class="li"><i class="fa-solid fa-fire"></i></span>Best Sellers<i class="fa-solid fa-arrow-right ar"></i></a>
     </nav>
     <div class="m-promo" style="--i:5"><i class="fa-solid fa-truck-fast"></i><div><b>Free shipping over RM 150</b><small>Cash on delivery across Malaysia</small></div></div>
     <div class="m-foot" style="--i:6">
-      <a class="m-wa" href="#" id="mobWA" aria-label="Chat on WhatsApp"><i class="fa-brands fa-whatsapp"></i> Chat on WhatsApp</a>
+      <a class="m-wa" href="https://wa.me/60177468939" target="_blank" rel="noopener" id="mobWA" aria-label="Chat on WhatsApp"><i class="fa-brands fa-whatsapp"></i> Chat on WhatsApp</a>
       <a class="m-round" href="#" id="mobIG" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
       <button class="m-round" id="mobAcc" type="button" aria-label="Account"><i class="fa-regular fa-user"></i></button>
     </div>
@@ -942,7 +959,7 @@ footer.ft{position:relative;overflow:hidden;background:linear-gradient(180deg,va
         <h4>Popular searches</h4>
         <div class="sp-chips"><button type="button" data-q="oud">Oud</button><button type="button" data-q="rose">Rose</button><button type="button" data-q="fresh">Fresh</button><button type="button" data-q="vanilla">Vanilla</button><button type="button" data-q="musk">Musk</button><button type="button" data-q="amber">Amber</button></div>
         <h4>Browse</h4>
-        <div class="sp-cats"><a href="#shop" data-filter="men">Men's Perfumes <i class="fa-solid fa-arrow-right"></i></a><a href="#shop" data-filter="women">Women's Perfumes <i class="fa-solid fa-arrow-right"></i></a><a href="#shop" data-filter="unisex">Unisex Fragrances <i class="fa-solid fa-arrow-right"></i></a><a href="#shop" data-filter="luxury">Luxury Collection <i class="fa-solid fa-arrow-right"></i></a><a href="#shop" data-filter="best">Best Sellers <i class="fa-solid fa-arrow-right"></i></a></div>
+        <div class="sp-cats"><a href="men.html">Men's Perfumes <i class="fa-solid fa-arrow-right"></i></a><a href="women.html">Women's Perfumes <i class="fa-solid fa-arrow-right"></i></a><a href="shop.html?f=unisex">Unisex Fragrances <i class="fa-solid fa-arrow-right"></i></a><a href="shop.html?f=luxury">Luxury Collection <i class="fa-solid fa-arrow-right"></i></a><a href="bestsellers.html">Best Sellers <i class="fa-solid fa-arrow-right"></i></a></div>
       </aside>
       <section class="sp-main" aria-live="polite">
         <div class="sp-head" id="spHead"></div>
@@ -992,55 +1009,14 @@ footer.ft{position:relative;overflow:hidden;background:linear-gradient(180deg,va
       <button class="chip" data-f="unisex">Unisex</button>
       <button class="chip" data-f="luxury">Luxury</button>
     </div>
-      <label class="sort"><span>Sort by</span><select id="sortSel" aria-label="Sort fragrances"><option value="featured">Featured</option><option value="rated">Top rated</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option><option value="sale">Biggest discount</option></select></label>
+      <label class="sort"><span>Sort by</span><select id="sortSel" aria-label="Sort fragrances"><option value="featured">Featured</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option><option value="sale">Biggest discount</option></select></label>
     </div>
     <div class="pwrap" id="pwrap"><div id="spotlight"></div><div class="grid" id="productGrid"></div></div>
+    <div class="sec-more"><a class="btn btn-dark" href="shop.html">View all fragrances <i class="fa-solid fa-arrow-right-long"></i></a></div>
   </div>
 </section>
 
 <!-- ================= REVIEWS ================= -->
-<section class="pad reviews" id="reviews">
-  <div class="container">
-    <div class="sec-head" data-reveal>
-      <div><span class="eyebrow">Testimonials</span><h2 class="h2">Words from Our Customers</h2></div>
-      <p>Sample reviews shown until customer feedback comes in.</p>
-    </div>
-    <div class="rv-top" data-reveal>
-      <div class="rv-score">
-        <b id="rvNum">4.8</b>
-        <div class="stars" id="rvStars" aria-hidden="true">★★★★★</div>
-        <small id="rvBased">Based on sample reviews</small>
-        <ul class="rv-bars" id="rvBars"></ul>
-      </div>
-      <div class="rv-stage" id="rvStage" aria-roledescription="carousel" aria-label="Featured customer reviews">
-        <span class="rv-glyph" aria-hidden="true">“</span>
-        <div class="rv-slides" id="rvSlides" aria-live="polite"></div>
-        <div class="rv-ctrl">
-          <div class="rv-arrows"><button id="rvPrev" aria-label="Previous review"><i class="fa-solid fa-arrow-left"></i></button><button id="rvNext" aria-label="Next review"><i class="fa-solid fa-arrow-right"></i></button></div>
-          <div class="rv-dots" id="rvDots"></div>
-          <span class="rv-count" id="rvCount">01 / 08</span>
-        </div>
-        <span class="rv-bar" id="rvBar"></span>
-      </div>
-    </div>
-    <div class="rv-marq" aria-hidden="true"><div class="rv-row" id="rvRow1"></div><div class="rv-row rev" id="rvRow2"></div></div>
-  </div>
-</section>
-
-<!-- ================= SOCIAL ================= -->
-<section class="pad" id="social">
-  <div class="container">
-    <div class="sec-head" data-reveal style="justify-content:center;text-align:center">
-      <div><h2 class="h2">Follow the Fragrance Journey</h2></div>
-    </div>
-    <div class="social-grid" id="socialGrid"></div>
-    <div class="social-cta" data-reveal>
-      <div class="handle">@englishperfume.store</div>
-      <a class="btn btn-dark" href="https://www.instagram.com/" target="_blank" rel="noopener"><i class="fa-brands fa-instagram"></i> Follow Us</a>
-    </div>
-  </div>
-</section>
-
 <section class="news">
   <div class="container news-in">
     <div><h3 class="h2" style="font-size:2.4rem">Join the Inner Circle</h3><p style="color:var(--muted)">Early access to launches and members-only offers.</p></div>
@@ -1070,11 +1046,11 @@ footer.ft{position:relative;overflow:hidden;background:linear-gradient(180deg,va
         </div>
         <span class="ft-cod"><i class="fa-solid fa-truck-fast"></i> Cash on delivery across Malaysia</span>
       </div>
-      <div data-reveal style="transition-delay:.08s"><h4>Quick links</h4><ul><li><a href="#home">Home</a></li><li><a href="#shop" data-filter="all">Shop all</a></li><li><a href="#shop" data-filter="best">Best sellers</a></li><li><a href="#reviews">Reviews</a></li></ul></div>
-      <div data-reveal style="transition-delay:.16s"><h4>Categories</h4><ul><li><a href="#shop" data-filter="men">Men's perfumes</a></li><li><a href="#shop" data-filter="women">Women's perfumes</a></li><li><a href="#shop" data-filter="unisex">Unisex fragrances</a></li><li><a href="#shop" data-filter="luxury">Luxury collection</a></li></ul></div>
-      <div data-reveal style="transition-delay:.24s"><h4>Support</h4><ul><li><a href="#">Customer support</a></li><li><a href="#">Shipping information</a></li><li><a href="#">Returns &amp; exchanges</a></li><li><a href="#">FAQ</a></li></ul></div>
+      <div data-reveal style="transition-delay:.08s"><h4>Quick links</h4><ul><li><a href="#home">Home</a></li><li><a href="shop.html">Shop all</a></li><li><a href="bestsellers.html">Best sellers</a></li></ul></div>
+      <div data-reveal style="transition-delay:.16s"><h4>Categories</h4><ul><li><a href="men.html">Men's perfumes</a></li><li><a href="women.html">Women's perfumes</a></li><li><a href="shop.html?f=unisex">Unisex fragrances</a></li><li><a href="shop.html?f=luxury">Luxury collection</a></li></ul></div>
+      <div data-reveal style="transition-delay:.24s"><h4>Support</h4><ul><li><a href="track.html">Track your order</a></li><li><a href="customer-support.html">Customer support</a></li><li><a href="shipping-policy.html">Shipping policy</a></li><li><a href="policies.html#returns">Returns &amp; exchanges</a></li><li><a href="policies.html#privacy">Privacy policy</a></li><li><a href="policies.html#terms">Terms of service</a></li><li><a href="customer-support.html#faq">FAQ</a></li></ul></div>
       <div class="contact" data-reveal style="transition-delay:.32s"><h4>Contact</h4><ul>
-        <li><i class="fa-solid fa-location-dot"></i><span>[Business Address Placeholder], Malaysia</span></li>
+        <li><i class="fa-solid fa-location-dot"></i><span>Equatorial Plaza, Jln Sultan Ismail, 50250 Kuala Lumpur, Malaysia</span></li>
         <li><i class="fa-solid fa-phone"></i><span><a href="tel:+60177468939">+60 17-746 8939</a></span></li>
         <li><i class="fa-solid fa-envelope"></i><span>hello@englishperfume.store</span></li>
         <li><i class="fa-regular fa-clock"></i><span>Mon–Sat, 9am – 6pm</span></li></ul>
@@ -1143,6 +1119,7 @@ const CONFIG = {
   paymentMethod: 'COD',
   // api: { products:'/api/products', orders:'/api/orders' }   // future
 };
+if(window.epConfig)epConfig(CONFIG);
 
 /* ---------- image helper (Unsplash demo photography + graceful SVG fallback) ---------- */
 const U = id => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=900&q=80`;
@@ -1182,11 +1159,12 @@ const PRODUCTS = [
   { id:9, name:'Citrus Aurora',     brand:'English Perfume', cat:'unisex', label:'Fresh · Citrus',     price:49,  was:69,  rating:4.6, reviews:67,  best:false, luxury:false, img:U(IMG.i), h:60,  notes:['Lemon','Neroli','Green Tea','Vetiver'], desc:'A sparkling burst of citrus that feels like sunrise on skin.' },
   { id:10,name:'Black Saffron',     brand:'English Perfume', cat:'men',    label:'Spicy · Leather',    price:89,  was:129, rating:4.8, reviews:102, best:true,  luxury:true,  img:U(IMG.j), h:15,  notes:['Saffron','Leather','Patchouli','Oakmoss'], desc:'Bold saffron over supple leather — made for evenings that matter.' }
 ];
+if(window.epMerge)epMerge(PRODUCTS);
 const CATEGORIES = [
-  { key:'men',    title:"Men's Perfumes",     sub:'Bold · Woody · Fresh',   img:U(IMG.k), h:210 },
-  { key:'women',  title:"Women's Perfumes",   sub:'Floral · Soft · Radiant', img:U(IMG.b), h:345 },
-  { key:'unisex', title:'Unisex Fragrances',  sub:'Modern · Balanced',       img:U(IMG.l), h:40 },
-  { key:'luxury', title:'Luxury Collection',  sub:'Rare · Rich · Refined',    img:U(IMG.c), h:36 }
+  { key:'men',    title:"Men's Perfumes",     sub:'Bold · Woody · Fresh',   img:'/images/products/dior-sauvage-elixir-100ml.jpg', h:210 },
+  { key:'women',  title:"Women's Perfumes",   sub:'Floral · Soft · Radiant', img:'/images/products/dior-jadore-edp-100ml.jpg', h:345 },
+  { key:'unisex', title:'Unisex Fragrances',  sub:'Modern · Balanced',       img:'/images/products/tom-ford-oud-wood-edp-100ml.jpg', h:40 },
+  { key:'luxury', title:'Luxury Collection',  sub:'Rare · Rich · Refined',    img:'/images/products/jpg-le-male-elixir-100ml.jpg', h:36 }
 ];
 const STATES = ['Johor','Kedah','Kelantan','Melaka','Negeri Sembilan','Pahang','Perak','Perlis','Pulau Pinang','Sabah','Sarawak','Selangor','Terengganu','Kuala Lumpur','Labuan','Putrajaya'];
 const byId = id => PRODUCTS.find(p => p.id === Number(id));
@@ -1256,10 +1234,10 @@ function renderCart(){
   const left=Math.max(0,CONFIG.freeShippingOver-t.sub), pct=Math.min(100,t.sub/CONFIG.freeShippingOver*100);
   $('#shipBar').innerHTML=n?`<div class="ship-msg"><i class="fa-solid fa-truck-fast"></i><span>${left>0?`Add <b>${rm(left)}</b> more for free shipping`:'You’ve unlocked <b>free shipping</b>'}</span></div><div class="bar"><i style="width:${pct}%"></i><em style="left:${pct}%"></em></div>`:'';
   const more=PRODUCTS.filter(p=>!cart.some(i=>i.id===p.id)).sort((a,b)=>(b.best-a.best)||(b.rating-a.rating)).slice(0,3);
-  const up=more.length?`<div class="up"><h5>You may also like</h5>${more.map(p=>`<div class="up-item">${imgTag(p.img,p.name,p.h)}<div><b>${p.name}</b><small>${rm(p.price)}</small></div><button data-add="${p.id}" aria-label="Add ${p.name} to cart"><i class="fa-solid fa-plus"></i></button></div>`).join('')}</div>`:'';
+  const up=more.length?`<div class="up"><h5>You may also like</h5>${more.map(p=>`<div class="up-item"><a class="plink" href="product.html?id=${p.id}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h)}</a><div><b><a href="product.html?id=${p.id}">${p.name}</a></b><small>${rm(p.price)}</small></div><button data-add="${p.id}" aria-label="Add ${p.name} to cart"><i class="fa-solid fa-plus"></i></button></div>`).join('')}</div>`:'';
   body.innerHTML=n?cart.map(i=>{const p=byId(i.id);return `<div class="line-item">
-      <div class="li-img">${imgTag(p.img,p.name,p.h)}</div>
-      <div class="li-main"><h4>${p.name}</h4><small>${p.label}</small><div class="qty"><button data-dec="${p.id}" aria-label="Decrease"><i class="fa-solid fa-minus"></i></button><span>${i.qty}</span><button data-inc="${p.id}" aria-label="Increase"><i class="fa-solid fa-plus"></i></button></div></div>
+      <div class="li-img"><a class="plink" href="product.html?id=${p.id}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h)}</a></div>
+      <div class="li-main"><h4><a href="product.html?id=${p.id}">${p.name}</a></h4><small>${p.label}</small><div class="qty"><button data-dec="${p.id}" aria-label="Decrease"><i class="fa-solid fa-minus"></i></button><span>${i.qty}</span><button data-inc="${p.id}" aria-label="Increase"><i class="fa-solid fa-plus"></i></button></div></div>
       <div class="line-price"><b>${rm(p.price*i.qty)}</b>${i.qty>1?`<small>${rm(p.price)} each</small>`:''}<button class="rm" data-rm="${p.id}" aria-label="Remove ${p.name}"><i class="fa-regular fa-trash-can"></i></button></div></div>`;}).join('')+up
     :`<div class="drawer-empty"><div class="de-ico"><i class="fa-solid fa-bag-shopping"></i></div><h4>Your cart is empty</h4><p>Find a scent you’ll love.</p><br><button class="btn btn-dark" id="emptyShop">Start shopping</button><div class="de-chips"><a href="#shop" data-filter="men">Men</a><a href="#shop" data-filter="women">Women</a><a href="#shop" data-filter="unisex">Unisex</a><a href="#shop" data-filter="best">Best sellers</a></div></div>`;
 }
@@ -1285,11 +1263,12 @@ function closeAll(keepLock){ closeModals(true); $('#searchOv').classList.remove(
 function openQV(id){
   const p = byId(id);
   $('#qvBody').innerHTML = `<div class="qv-grid"><div class="qv-img">${imgTag(p.img,p.name,p.h)}</div>
-    <div class="qv-info"><span class="card-cat">${p.label}</span><h3>${p.name}</h3><div class="stars">${stars(p.rating)}<span>${p.rating} · ${p.reviews} sample reviews</span></div>
+    <div class="qv-info"><span class="card-cat">${p.label}</span><h3>${p.name}</h3>
     <div class="price"><b>${rm(p.price)}</b><s>${rm(p.was)}</s><span class="sale" style="position:static">−${off(p)}%</span></div>
     <p>${p.desc}</p><div class="notes">${p.notes.map(n=>`<span>${n}</span>`).join('')}</div>
     <p style="font-size:.8rem"><i class="fa-solid fa-truck-fast" style="color:var(--brass)"></i> Cash on Delivery available · Ships within Malaysia</p>
-    <button class="btn btn-dark block" data-add="${p.id}" data-close-after>Add to Cart <i class="fa-solid fa-arrow-right-long"></i></button></div></div>`;
+    <button class="btn btn-dark block" data-add="${p.id}" data-close-after>Add to Cart <i class="fa-solid fa-arrow-right-long"></i></button>
+    <a href="product.html?id=${p.id}" style="display:block;text-align:center;margin-top:14px;font-size:.9rem;text-decoration:underline;color:var(--oud)">View full details</a></div></div>`;
   openModal($('#qvModal'));
 }
 
@@ -1365,7 +1344,7 @@ document.addEventListener('click', e=>{
   if(t.closest('#emptyShop')||t.closest('#keepShop')){ closeCart(); const y=$('#shop').getBoundingClientRect().top+scrollY; scrollTo({top:y,behavior:'smooth'}); }
 });
 $('#cartBtn').onclick = openCart; $('#closeCart').onclick = ()=>closeCart(); $('#overlay').onclick = ()=>closeCart();
-$('#checkoutBtn').onclick = openCheckout;
+$('#checkoutBtn').onclick = ()=>{ if(!cart.length) return toast('Your cart is empty'); location.href='checkout.html'; };
 $('#wishBtn').onclick = ()=>toast(wish.length ? `${wish.length} item(s) in your wishlist` : 'Your wishlist is empty');
 $('#accountBtn').onclick = ()=>toast('Customer accounts coming in the full version');
 /* ---- search overlay ---- */
@@ -1374,7 +1353,7 @@ const sTokens = q => q.toLowerCase().split(/\s+/).filter(Boolean);
 const sHay = p => [p.name,p.label,p.cat,p.notes.join(' '),p.luxury?'luxury':'',p.best?'best seller':''].join(' ').toLowerCase();
 function sMark(name,q){ const i = name.toLowerCase().indexOf(q.trim().toLowerCase()); return (!q.trim()||i<0) ? name : name.slice(0,i)+'<mark>'+name.slice(i,i+q.trim().length)+'</mark>'+name.slice(i+q.trim().length); }
 function sItem(p,q){
-  return `<div class="sp-item" data-qv="${p.id}" role="button" tabindex="0" aria-label="Quick view ${p.name}">
+  return `<div class="sp-item" data-go="${p.id}" role="link" tabindex="0" aria-label="View ${p.name}">
     <div class="sp-ph">${imgTag(p.img.replace('w=900','w=300'),p.name,p.h)}</div>
     <div class="sp-txt"><small>${p.label}</small><b>${sMark(p.name,q)}</b><span class="sp-pr">${rm(p.price)}<s>${rm(p.was)}</s></span></div>
     <button class="sp-add" type="button" data-add="${p.id}" aria-label="Add ${p.name} to cart"><i class="fa-solid fa-plus"></i></button></div>`;
@@ -1433,7 +1412,6 @@ $$('#mobile nav a').forEach((a,i)=>a.style.transitionDelay=(.25+i*.06)+'s');
 /* ---------- init ---------- */
 function init(){
   renderCategories(); renderProducts(); renderCart(); updateWish();
-  const sg=[IMG.b,IMG.k,IMG.f,IMG.l,IMG.i,IMG.h]; $('#socialGrid').innerHTML = sg.map((id,i)=>`<a class="ig" data-reveal href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram post ${i+1}">${imgTag(U(id),'English Perfume gallery '+(i+1),[40,200,45,30,60,350][i])}</a>`).join('');
   $('#drawer').style.transform='translateX(105%)';
   initHero(); initCats(); initProducts(); initReveal();
 }
@@ -1499,7 +1477,7 @@ function renderCategories(){
   const count = k => PRODUCTS.filter(p => k==='luxury' ? p.luxury : p.cat===k).length;
   $('#catGrid').innerHTML = CATEGORIES.map((c,i)=>{
     const st = CAT_STYLE[c.key], b = catBottle(c.key, 'cb'+i);
-    return `<a class="cat" href="#shop" data-filter="${c.key}" data-reveal style="--i:${i};--c1:${st.c1};--c2:${st.c2};--glow:${st.glow};--fg:${st.fg};--shade:${st.shade}" aria-label="${c.title}">
+    return `<a class="cat" href="${({men:'men.html',women:'women.html'})[c.key]||'shop.html?f='+c.key}" data-reveal style="--i:${i};--c1:${st.c1};--c2:${st.c2};--glow:${st.glow};--fg:${st.fg};--shade:${st.shade}" aria-label="${c.title}">
       <div class="cat-bg"></div><div class="cat-floor"></div>${catFx(c.key, st.fx)}
       ${imgTag(c.img,c.title,c.h,'class="cat-photo"')}
       <span class="cat-num">0${i+1}</span><span class="cat-vert">${c.title}</span>
@@ -1570,39 +1548,41 @@ function sorted(list){
   const l = [...list];
   if(sort==='low') l.sort((a,b)=>a.price-b.price);
   else if(sort==='high') l.sort((a,b)=>b.price-a.price);
-  else if(sort==='rated') l.sort((a,b)=>b.rating-a.rating || b.reviews-a.reviews);
-  else if(sort==='sale') l.sort((a,b)=>off(b)-off(a));
+    else if(sort==='sale') l.sort((a,b)=>off(b)-off(a));
   return l;
 }
 function cardHTML(p, i=0){
   return `<article class="card" data-card style="--h:${p.h};--i:${i}">
     <div class="card-media">
       <div class="p-floor"></div>
-      ${imgTag(p.img,p.name,p.h,'class="p-photo"')}
-      <button class="p-qv" data-qv="${p.id}" aria-label="Quick view ${p.name}"><i class="fa-regular fa-eye"></i> Quick view</button>
+      <a class="plink" href="product.html?id=${p.id}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img,p.name,p.h,'class="p-photo"')}</a>
+      <a class="p-qv" href="product.html?id=${p.id}" aria-label="View ${p.name}"><i class="fa-regular fa-eye"></i> View product</a>
       <div class="p-badges"><span class="sale">−${off(p)}%</span>${p.best ? '<span class="tagp">Best seller</span>' : ''}${p.luxury ? '<span class="tagp gold">Luxury</span>' : ''}</div>
       <button class="wish" data-id="${p.id}" aria-label="Add ${p.name} to wishlist"><i class="fa-regular fa-heart"></i></button>
     </div>
     <div class="card-info">
       <span class="card-cat">${p.label}</span>
-      <h3 class="card-name">${p.name}</h3>
-      <div class="stars">${stars(p.rating)}<span>${p.rating} (${p.reviews})</span></div>
+      <h3 class="card-name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+      
       <div class="p-notes">${p.notes.slice(0,3).map(n=>`<span>${n}</span>`).join('')}</div>
       <div class="p-buy"><div class="price"><b>${rm(p.price)}</b><s>${rm(p.was)}</s></div><button class="p-add" data-add="${p.id}"><i class="fa-solid fa-plus"></i> Add</button></div>
     </div></article>`;
 }
 function spotHTML(p){
   return `<article class="spot" style="--h:${p.h};--i:0">
-    <div class="spot-stage">${catFx('spot','spark')}<span class="spot-pill">Editor’s pick</span>${imgTag(p.img.replace('w=900','w=1400'),p.name,p.h,'class="spot-photo"')}<div class="spot-off">−${off(p)}%<small>today</small></div></div>
-    <div class="spot-info"><span class="eyebrow">${p.label}</span><h3>${p.name}</h3>
-      <div class="stars">${stars(p.rating)}<span>${p.rating} · ${p.reviews} sample reviews</span></div>
+    <div class="spot-stage">${catFx('spot','spark')}<span class="spot-pill">Editor’s pick</span><a class="plink" href="product.html?id=${p.id}" tabindex="-1" aria-label="${p.name}">${imgTag(p.img.replace('w=900','w=1400'),p.name,p.h,'class="spot-photo"')}</a><div class="spot-off">−${off(p)}%<small>today</small></div></div>
+    <div class="spot-info"><span class="eyebrow">${p.label}</span><h3><a href="product.html?id=${p.id}">${p.name}</a></h3>
+      
       <p>${p.desc}</p><div class="notes">${p.notes.map(n=>`<span>${n}</span>`).join('')}</div>
       <div class="price"><b>${rm(p.price)}</b><s>${rm(p.was)}</s></div>
-      <div class="spot-cta"><button class="btn btn-dark" data-add="${p.id}">Add to cart <i class="fa-solid fa-arrow-right-long"></i></button><button class="btn btn-line" data-qv="${p.id}">Quick view</button></div></div></article>`;
+      <div class="spot-cta"><button class="btn btn-dark" data-add="${p.id}">Add to cart <i class="fa-solid fa-arrow-right-long"></i></button><a class="btn btn-line" href="product.html?id=${p.id}">View product</a></div></div></article>`;
+}
+function spotPick(){ // Editor's pick: first luxury best seller, else any best seller / luxury, else the first product (never crashes if a product was deleted)
+  return PRODUCTS.find(p=>p.luxury&&p.best)||PRODUCTS.find(p=>p.best)||PRODUCTS.find(p=>p.luxury)||PRODUCTS[0]||null;
 }
 function renderProducts(){
   const list = filtered(), g = $('#productGrid');
-  $('#spotlight').innerHTML = (filter==='all' && !query.trim() && sort==='featured') ? spotHTML(byId(3)) : '';
+  $('#spotlight').innerHTML = (filter==='all' && !query.trim() && sort==='featured') ? (spotPick() ? spotHTML(spotPick()) : '') : '';
   g.innerHTML = list.length ? list.map(cardHTML).join('') : `<div class="empty"><h3 class="h2" style="font-size:2rem">No fragrances found</h3><p>Try another category or search term.</p></div>`;
   $$('#filters .chip').forEach(c => c.classList.toggle('active', c.dataset.f===filter));
   updateWish();
@@ -1627,13 +1607,13 @@ function initProducts(){
 const H = id => U(id).replace('w=900','w=1800');
 const HERO = [
   { eyebrow:'New Arrivals', title:'Find Your<br><span>Signature Scent.</span>', lead:'Discover your next favourite fragrance.',
-    f:'men', cta:'Shop new arrivals', banner:'images/banner-men.jpg', alt:'Premium Perfumes – Fragrance That Defines You. Shop now', photo:H(IMG.a),
+    f:'men', cta:'Shop new arrivals', banner:'images/banner-men.jpg', alt:'Premium Perfumes – Fragrance That Defines You. Shop now', photo:'/images/products/dior-sauvage-elixir-100ml.jpg',
     c:{bg1:'#f4eadf',bg2:'#dfc9b3',fl1:'#f8f1e9',fl2:'#e6d8c6',mir1:'#7a3b55',mir2:'#3a1a28',leaf:'rgba(70,48,36,.55)',shade:'rgba(244,234,223,.97)',b:{h:32,s:70,l:50,w:170,rx:22}} },
   { eyebrow:"Women's Collection", title:'Soft Florals<br><span>For Every Moment.</span>', lead:'Rose, jasmine and creamy musk, made to be noticed.',
-    f:'women', cta:"Shop women's", banner:'images/banner-women.jpg', alt:'Perfumes For Her – Elegance in Every Spray. Shop now', photo:H(IMG.b),
+    f:'women', cta:"Shop women's", banner:'images/banner-women.jpg', alt:'Perfumes For Her – Elegance in Every Spray. Shop now', photo:'/images/products/dior-jadore-edp-100ml.jpg',
     c:{bg1:'#fbece9',bg2:'#edc9c8',fl1:'#fcf3ef',fl2:'#f0d9d4',mir1:'#e9a9b1',mir2:'#c46f7d',leaf:'rgba(110,55,60,.45)',shade:'rgba(250,236,233,.97)',b:{h:345,s:55,l:62,w:160,rx:60}} },
   { eyebrow:'Luxury Collection', title:'Luxury You Can<br><span>Wear Every Day.</span>', lead:'Rare amber, saffron and sandalwood, from just RM 49.',
-    f:'all', cta:'Shop luxury', banner:'images/banner-collection.jpg', alt:'Discover Our Exclusive Collection – Luxury Fragrances for Every Mood. Shop now', photo:H(IMG.c),
+    f:'all', cta:'Shop luxury', banner:'images/banner-collection.jpg', alt:'Discover Our Exclusive Collection – Luxury Fragrances for Every Mood. Shop now', photo:'/images/products/jpg-le-male-elixir-100ml.jpg',
     c:{bg1:'#eef0ec',bg2:'#cdd8db',fl1:'#f3f5f2',fl2:'#d9e0e0',mir1:'#2c5068',mir2:'#0f2230',leaf:'rgba(25,45,60,.45)',shade:'rgba(237,240,237,.97)',b:{h:40,s:75,l:52,w:150,rx:14}} }
 ];
 const HERO_TRUST = [['fa-truck-fast','Free shipping','Over RM 150'],['fa-money-bill-wave','Cash on delivery','Across Malaysia'],['fa-shield-halved','Secure checkout','Shop with confidence'],['fa-clock','Fast delivery','2–5 working days']];
@@ -1686,10 +1666,11 @@ function hsScene(i, s){
 }
 
 function initHero(){
+  const HF = f => f==='men'?'men.html':f==='women'?'women.html':f==='best'?'bestsellers.html':'shop.html'+(f&&f!=='all'?'?f='+f:'');
   const track = $('#heroTrack');
   track.innerHTML = HERO.map((s,i)=>s.banner
     ? `<article class="hslide is-banner${i?'':' active'}" aria-roledescription="slide" aria-label="${i+1} of ${HERO.length}">
-    <a class="hs-link" href="#shop" data-filter="${s.f}" aria-label="${s.alt}"><img class="hs-banner" src="${s.banner}" alt="${s.alt}" ${i?'loading="lazy"':'fetchpriority="high"'} decoding="async"></a></article>`
+    <a class="hs-link" href="${HF(s.f)}" aria-label="${s.alt}"><img class="hs-banner" src="${s.banner}" alt="${s.alt}" ${i?'loading="lazy"':'fetchpriority="high"'} decoding="async"></a></article>`
     : `<article class="hslide${i?'':' active'}" style="--sbg:${s.c.bg1};--shade:${s.c.shade}" aria-roledescription="slide" aria-label="${i+1} of ${HERO.length}">
     ${s.photo ? `<img class="hs-bg" src="${s.photo}" alt="">` : hsScene(i,s)}
     <div class="hs-shade"></div>
@@ -1698,7 +1679,7 @@ function initHero(){
       <span class="hs-eyebrow rise" style="--i:1">${s.eyebrow}</span>
       <${i?'h2':'h1'} class="hs-title rise" style="--i:2">${s.title}</${i?'h2':'h1'}>
       <p class="hs-lead rise" style="--i:3">${s.lead}</p>
-      <a href="#shop" class="btn btn-dark rise" style="--i:4" data-filter="${s.f}">${s.cta} <i class="fa-solid fa-arrow-right-long"></i></a>
+      <a href="${HF(s.f)}" class="btn btn-dark rise" style="--i:4">${s.cta} <i class="fa-solid fa-arrow-right-long"></i></a>
       <div class="hs-trust rise" style="--i:5">${HERO_TRUST.map(t=>`<div><i class="fa-solid ${t[0]}"></i><b>${t[1]}</b><small>${t[2]}</small></div>`).join('')}</div>
     </div></div></article>`).join('');
   $('#heroDots').innerHTML = HERO.map((s,i)=>`<button class="hdot" data-i="${i}" aria-label="Go to slide ${i+1}"></button>`).join('');
@@ -1732,50 +1713,29 @@ function initReveal(){
 }
 init();
 
-function initReviews(){
-  const AV={a:'1494790108377-be9c29b29330',d:'1507003211169-0a1dd7228f2d',n:'1438761681033-6461ffad8d80',f:'1544005313-94ddf0286df2',h:'1500648767791-00dcc994a43e',m:'1534528741775-53994a69daeb',r:'1472099645785-5658abf4ff4e',s:'1573496359142-b8d87734a5a2'};
-  const R=[
-    {n:'Aisyah R.',c:'Kuala Lumpur',s:5,a:'a',p:1,t:'The scent lasted the whole day and I received so many compliments. The packaging felt truly premium.'},
-    {n:'Daniel T.',c:'Penang',s:5,a:'d',p:5,t:'Cash on delivery made ordering stress-free. Arrived quickly and smells exactly like the description.'},
-    {n:'Nurul H.',c:'Johor Bahru',s:4,a:'n',p:2,t:'Beautiful floral notes that suit Malaysian weather perfectly. Great value for the price.'},
-    {n:'Farah K.',c:'Shah Alam',s:5,a:'f',p:6,t:'Golden Vanilla feels like a warm hug. Everyone keeps asking what I am wearing.'},
-    {n:'Hafiz M.',c:'Kota Kinabalu',s:5,a:'h',p:5,t:'Fresh all day, even in the heat, and the price is hard to beat.'},
-    {n:'Mei Ling T.',c:'Ipoh',s:4,a:'m',p:4,t:'An elegant bottle with a soft, clean scent. Delivery took three days.'},
-    {n:'Arjun S.',c:'Melaka',s:5,a:'r',p:10,t:'Bold without being heavy. Black Saffron is worth every ringgit.'},
-    {n:'Siti Z.',c:'Kuching',s:5,a:'s',p:8,t:'I ordered Cherry Blush as a gift. She loved it, and the packaging looked premium.'}
-  ];
-  const st=n=>'★'.repeat(n)+'☆'.repeat(5-n);
-  const av=(r,c)=>`<span class="avatar ${c}"><img src="https://images.unsplash.com/photo-${AV[r.a]}?auto=format&fit=crop&w=120&h=120&q=80" alt="" loading="lazy" onerror="this.replaceWith('${r.n[0]}')"></span>`;
-  const avg=R.reduce((t,r)=>t+r.s,0)/R.length;
-  $('#rvNum').textContent=avg.toFixed(1);
-  $('#rvStars').textContent=st(Math.round(avg));
-  $('#rvBased').textContent=`Based on ${R.length} sample reviews`;
-  $('#rvBars').innerHTML=[5,4,3,2,1].map(n=>{const pc=Math.round(R.filter(r=>r.s===n).length/R.length*100);return `<li><span>${n} ★</span><i style="--w:${pc}%"><u></u></i><em>${pc}%</em></li>`}).join('');
-  $('#rvSlides').innerHTML=R.map((r,i)=>{const p=byId(r.p);return `<figure class="rv-slide${i?'':' on'}" aria-hidden="${i?'true':'false'}"><div class="stars">${st(r.s)}</div><blockquote>${r.t}</blockquote><figcaption>${av(r,'lg')}<div><b>${r.n}</b><small>${r.c} · Sample review</small></div><span class="rv-buy"><img src="${p.img}" alt="" onerror="this.remove()">${p.name}</span></figcaption></figure>`}).join('');
-  $('#rvDots').innerHTML=R.map((r,i)=>`<button class="rv-dot" aria-label="Show review ${i+1}"></button>`).join('');
-  const card=r=>`<article class="rv-card"><div class="stars">${st(r.s)}</div><p>${r.t}</p><div class="rv-who">${av(r,'sm')}<div><b>${r.n}</b><small>${r.c}</small></div></div></article>`;
-  const row=l=>{const h=[...l,...l].map(card).join('');return `<div class="rv-track">${h}${h}</div>`};
-  $('#rvRow1').innerHTML=row(R.slice(0,4)); $('#rvRow2').innerHTML=row(R.slice(4));
-  const sl=$$('.rv-slide'), dt=$$('.rv-dot'), bar=$('#rvBar'); let cur=0, timer, hov=false;
-  function show(n){
-    cur=(n+R.length)%R.length;
-    sl.forEach((x,i)=>{x.classList.toggle('on',i===cur);x.setAttribute('aria-hidden',i!==cur)});
-    dt.forEach((d,i)=>d.classList.toggle('on',i===cur));
-    $('#rvCount').textContent=String(cur+1).padStart(2,'0')+' / '+String(R.length).padStart(2,'0');
-    bar.classList.remove('run'); void bar.offsetWidth; clearTimeout(timer);
-    if(!reduced){ bar.classList.add('run'); timer=setTimeout(()=>show(hov?cur:cur+1),7000); }
+
+/* deep links from other pages: ?f=men  ?q=oud  #cart  #checkout */
+(function(){
+  const sp=new URLSearchParams(location.search), f=sp.get('f'), q=sp.get('q'), h=location.hash;
+  const ok=['all','best','men','women','unisex','luxury'];
+  if((f&&ok.includes(f))||q){
+    if(f&&ok.includes(f)) filter=f;
+    if(q){ query=q; filter='all'; const si=$('#searchInput'); if(si) si.value=q; }
+    renderProducts();
+    setTimeout(()=>{ const el=$('#shop'); if(el) scrollTo({top:el.getBoundingClientRect().top+scrollY-20,behavior:'smooth'}); },350);
   }
-  $('#rvPrev').onclick=()=>show(cur-1); $('#rvNext').onclick=()=>show(cur+1);
-  dt.forEach((d,i)=>d.onclick=()=>show(i));
-  const stg=$('#rvStage'); stg.addEventListener('mouseenter',()=>hov=true); stg.addEventListener('mouseleave',()=>hov=false);
-  show(0);
-  const num=$('#rvNum');
-  if(!reduced && 'IntersectionObserver' in window){
-    num.textContent='0.0';
-    new IntersectionObserver((es,io)=>{ if(es[0].isIntersecting){ io.disconnect(); const t0=performance.now(); const f=t=>{const k=Math.min(1,(t-t0)/1600); num.textContent=(avg*(1-Math.pow(1-k,3))).toFixed(1); if(k<1) requestAnimationFrame(f)}; requestAnimationFrame(f); } },{threshold:.4}).observe(num);
-  }
-}
-initReviews();
+  if(h==='#cart') setTimeout(openCart,450);
+  if(h==='#checkout') location.replace('checkout.html');
+})();
+
+/* product cards: click anywhere on a card (not on a button or link) to open that product's own page */
+document.addEventListener('click',e=>{
+  if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
+  if(e.target.closest('a,button,input,select,textarea,label')) return;
+  const go=e.target.closest('[data-go]'); if(go){location.href='product.html?id='+go.dataset.go;return;}
+  const c=e.target.closest('.card,.up-item,.spot,.bs-pod,.bs-row,.mx-pc,.wm-card'); if(!c) return;
+  const a=c.querySelector('a[href*="product.html"]'); if(a) location.href=a.getAttribute('href');
+});
 </script>
 </body>
 </html>
