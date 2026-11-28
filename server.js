@@ -220,34 +220,73 @@ app.use('/api/orders', (req, res, next) => {
 /* ===== PUBLIC: current product catalogue ===== */
 app.get('/api/catalog', async (req,res)=>{ await loadCatalog(); res.set('Cache-Control','no-store').json({products:CATALOG.products,config:CATALOG.config}); });
 
-/* ===== PUBLIC: how many units of a product were ordered in the last 24 hours (a number only, no customer data) ===== */
-app.get('/api/sold', async (req, res) => {
+/* ===== PUBLIC: customer reviews (only customers with a shipped/delivered order can write one; you approve each review in the admin panel) ===== */
+const shortName = n => { const w = String(n || '').trim().split(/\s+/).filter(Boolean); return w.length > 1 ? w[0] + ' ' + w[w.length - 1].charAt(0).toUpperCase() + '.' : (w[0] || 'Customer'); };
+const tailDigits = v => String(v || '').replace(/\D/g, '').slice(-8);
+
+app.get('/api/reviews', async (req, res) => {
   const id = Number(req.query.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: 'bad id' });
-  await loadOrders();
-  const since = Date.now() - 24 * 3600e3;
-  let sold = 0;
-  for (const o of DB.orders) {
-    if (o.status === 'cancelled' || new Date(o.createdAt).getTime() < since) continue;
-    for (const i of (o.items || [])) if (Number(i.productId) === id) sold += Number(i.qty) || 0;
-  }
-  res.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120').json({ sold, hours: 24 });
+  const all = (await store.hall('reviews')).filter(r => r.productId === id && r.status === 'approved')
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  const count = all.length;
+  const avg = count ? Math.round(all.reduce((t, r) => t + r.rating, 0) / count * 10) / 10 : 0;
+  const dist = [5, 4, 3, 2, 1].map(s => all.filter(r => r.rating === s).length);
+  res.set('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60').json({
+    count, avg, dist,
+    reviews: all.slice(0, 50).map(r => ({ id: r.id, name: shortName(r.name), rating: r.rating, title: r.title, text: r.text, createdAt: r.createdAt, reply: r.reply || '' }))
+  });
 });
 
-/* ===== PUBLIC: live visitors on a product page (each open page checks in every 30 s; a number only) ===== */
-app.post('/api/viewing', async (req, res) => {
-  const id = Number((req.body || {}).id), vid = String((req.body || {}).vid || '');
-  if (!Number.isInteger(id) || !/^[a-z0-9-]{8,40}$/i.test(vid)) return res.status(400).json({ error: 'bad request' });
-  if (!(await limit('view:' + req.ip, 240, 600e3))) return res.status(429).json({ viewing: 0 });
-  const now = Date.now();
-  await store.hset('views', vid, { vid, id, t: now });
-  const all = await store.hall('views');
-  let viewing = 0;
-  for (const v of all) {
-    if (now - v.t > 600e3) { store.hdel('views', v.vid).catch(() => {}); continue; }   // tidy up old check-ins
-    if (v.id === id && now - v.t < 75e3) viewing++;
+app.post('/api/reviews', async (req, res) => {
+  const b = req.body || {};
+  if (b.website) return res.status(201).json({ ok: true });                                   // bot trap
+  if (!(await limit('review:' + req.ip, 6, 3600e3))) return res.status(429).json({ error: 'Too many attempts. Please try again later.' });
+  await loadCatalog();
+  const productId = Number(b.productId), rating = Math.round(Number(b.rating));
+  const name = str(b.name, 60), title = str(b.title, 80), text = str(b.text, 1000);
+  const raw = str(b.orderNo, 20).toUpperCase().replace(/\s+/g, '');
+  const orderNo = /^\d+$/.test(raw) ? 'EP-' + raw : raw;
+  const digits = str(b.phone, 25).replace(/\D/g, '');
+  if (!PRODUCTS.has(productId)) return res.status(400).json({ error: 'This product is not available.' });
+  if (name.length < 2) return res.status(400).json({ error: 'Please enter your name.' });
+  if (!(rating >= 1 && rating <= 5)) return res.status(400).json({ error: 'Please choose a star rating.' });
+  if (text.length < 10) return res.status(400).json({ error: 'Please write at least a short sentence about the fragrance.' });
+  const notFound = () => res.status(404).json({ error: "We couldn't match that order. Check the order number and the phone number you used at checkout." });
+  if (!/^EP-\d{1,8}$/.test(orderNo) || digits.length < 8) return notFound();
+  const oid = await store.hget('byno', orderNo);
+  const o = oid ? await store.hget('orders', oid) : null;
+  if (!o || tailDigits(o.customer && o.customer.phone) !== tailDigits(digits)) return notFound();
+  if (!(o.items || []).some(i => Number(i.productId) === productId)) return res.status(400).json({ error: 'This order does not include this product.' });
+  if (o.status !== 'shipped' && o.status !== 'delivered') return res.status(400).json({ error: 'You can write a review once your order has been shipped or delivered.' });
+  const existing = (await store.hall('reviews')).some(r => r.orderNo === orderNo && r.productId === productId);
+  if (existing) return res.status(409).json({ error: 'You have already reviewed this product for this order. Thank you!' });
+  const rv = { id: crypto.randomUUID(), productId, orderNo, name, rating, title, text, status: 'pending', createdAt: new Date().toISOString(), reply: '' };
+  await store.hset('reviews', rv.id, rv);
+  res.status(201).json({ ok: true });
+});
+
+app.get('/api/admin/reviews', auth, async (req, res) => {
+  await loadCatalog();
+  const list = (await store.hall('reviews')).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+    .map(r => ({ ...r, productName: (PRODUCTS.get(r.productId) || {}).name || ('Product ' + r.productId) }));
+  res.json({ reviews: list });
+});
+app.patch('/api/admin/reviews/:id', auth, async (req, res) => {
+  const r = await store.hget('reviews', req.params.id);
+  if (!r) return res.status(404).json({ error: 'Review not found.' });
+  const b = req.body || {};
+  if (b.status !== undefined) {
+    if (!['pending', 'approved', 'hidden'].includes(b.status)) return res.status(400).json({ error: 'Bad status.' });
+    r.status = b.status;
   }
-  res.set('Cache-Control', 'no-store').json({ viewing });
+  if (b.reply !== undefined) r.reply = str(b.reply, 500);
+  await store.hset('reviews', r.id, r);
+  res.json({ ok: true, review: r });
+});
+app.delete('/api/admin/reviews/:id', auth, async (req, res) => {
+  await store.hdel('reviews', req.params.id);
+  res.json({ ok: true });
 });
 
 /* ===== PUBLIC: place an order ===== */

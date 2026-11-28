@@ -6,7 +6,7 @@ function toast(s){const t=$('#toast');t.textContent=s;t.classList.add('show');se
 function showLogin(){ $('#loginScreen').classList.remove('hidden');$('#app').classList.add('hidden') }function showApp(){ $('#loginScreen').classList.add('hidden');$('#app').classList.remove('hidden');refresh(); }
 async function refresh(){try{const [o,p]=await Promise.all([api('/orders'),api('/products')]);orders=o.orders||[];products=p.products||[];render()}catch(e){toast(e.message);if(e.message.toLowerCase().includes('sign'))showLogin()}}
 function nav(){document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));$('#pageTitle').textContent=page[0].toUpperCase()+page.slice(1)}
-function render(){nav();if(page==='overview')overview();else if(page==='orders')orderPage();else productsPage()}
+function render(){nav();if(page==='overview')overview();else if(page==='orders')orderPage();else if(page==='reviews')reviewsPage();else productsPage()}
 function overview(){let today=new Date().toDateString(),todayOrders=orders.filter(o=>new Date(o.createdAt).toDateString()===today),sales=orders.filter(o=>o.status==='delivered').reduce((a,o)=>a+o.totals.total,0),waiting=orders.filter(o=>['new','confirmed'].includes(o.status)).length,open=orders.filter(o=>!['delivered','cancelled'].includes(o.status)).length;$('#content').innerHTML=`<section class="welcome"><div><h2>Welcome back</h2><p>Manage orders and products from one place. No demo records are shown.</p></div><button class="btn primary" onclick="page='products';render();openProduct()">＋ Add product</button></section><div class="cards"><div class="card"><div class="stat-label">Orders today</div><div class="stat">${todayOrders.length}</div><div class="stat-sub">Real customer orders</div></div><div class="card"><div class="stat-label">Today's order value</div><div class="stat">${money(todayOrders.reduce((a,o)=>a+o.totals.total,0))}</div><div class="stat-sub">Including current statuses</div></div><div class="card"><div class="stat-label">Pending action</div><div class="stat">${waiting}</div><div class="stat-sub">New or awaiting confirmation</div></div><div class="card"><div class="stat-label">Delivered sales</div><div class="stat">${money(sales)}</div><div class="stat-sub">Delivered orders total</div></div></div><div class="panel"><div class="panel-head"><h3>Recent orders</h3><button class="btn small" onclick="page='orders';render()">View all</button></div>${orderTable(orders.slice(0,6))}</div>`}
 function orderTable(list){if(!list.length)return'<div class="empty">No orders yet.</div>';return`<div class="table-wrap"><table class="orders"><thead><tr><th>Order</th><th>Customer</th><th>Delivery address</th><th>Items</th><th>Total</th><th>Status</th><th>Placed</th><th>Actions</th></tr></thead><tbody>${list.map(o=>{const s=o.shipping||{};return`<tr><td><b>${esc(o.orderNo)}</b></td><td><b>${esc(o.customer.name)}</b><br><small>${esc(o.customer.phone)}</small><br><small>${esc(o.customer.email)}</small></td><td class="addr">${esc(s.address)}<br><small>${esc(s.city)}, ${esc(s.state)}</small>${o.notes?'<br><small class="note-flag">Customer left a note</small>':''}</td><td>${o.items.map(i=>esc(i.name)+' × '+i.qty).join('<br>')}</td><td>${money(o.totals.total)}</td><td><span class="status ${o.status}">${statusMap[o.status]||o.status}</span></td><td>${new Date(o.createdAt).toLocaleString()}</td><td><div class="order-actions"><button class="btn small" data-view-order="${esc(o.id)}">View details</button><select data-order-status="${esc(o.id)}">${Object.entries(statusMap).map(([k,v])=>`<option value="${k}" ${k===o.status?'selected':''}>${v}</option>`).join('')}</select><button class="btn small" data-save-status="${esc(o.id)}">Save</button></div></td></tr>`}).join('')}</tbody></table></div>`}
 function orderPage(){let list=orders.filter(o=>filter==='all'||o.status===filter);$('#content').innerHTML=`<div class="panel"><div class="panel-head"><h3>Order management</h3><input class="search" id="orderSearch" placeholder="Search order, name, phone or address"></div><div class="filters">${[['all','All'],...Object.entries(statusMap)].map(([k,v])=>`<button class="${filter===k?'selected':''}" data-filter="${k}">${v}</button>`).join('')}</div><div id="orderList">${orderTable(list)}</div></div>`;$('#orderSearch').oninput=e=>{const q=e.target.value.toLowerCase();$('#orderList').innerHTML=orderTable(orders.filter(o=>(filter==='all'||o.status===filter)&&(`${o.orderNo} ${o.customer.name} ${o.customer.phone} ${o.customer.email} ${(o.shipping||{}).address} ${(o.shipping||{}).city} ${(o.shipping||{}).state}`).toLowerCase().includes(q)))} }
@@ -58,3 +58,40 @@ document.addEventListener('click',async e=>{
  const cp=e.target.closest('[data-copy-addr]');if(cp){const o=orders.find(x=>x.id===cp.dataset.copyAddr),txt=o?`${o.customer.name}\n${o.customer.phone}\n${fullAddr(o)}`:'';try{await navigator.clipboard.writeText(txt);toast('Name, phone and address copied')}catch{toast('Could not copy. Select the text and copy it.')}return}
  const sv=e.target.closest('[data-save-note]');if(sv){try{const r=await api('/orders/'+sv.dataset.saveNote,{method:'PATCH',body:JSON.stringify({adminNote:$('#odNote').value})});const i=orders.findIndex(x=>x.id===sv.dataset.saveNote);if(i>=0&&r.order)orders[i]=r.order;toast('Note saved')}catch(err){toast(err.message)}}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#orderModal').classList.remove('show')});
+
+
+/* ===== Reviews: customers write them, you approve them ===== */
+let reviews=[];
+async function reviewsPage(){
+  $('#content').innerHTML='<div class="panel"><div class="empty">Loading reviews…</div></div>';
+  try{const j=await api('/reviews');reviews=j.reviews||[]}catch(e){toast(e.message);return}
+  drawReviews();
+}
+function drawReviews(){
+  const pend=reviews.filter(r=>r.status==='pending').length;
+  const stars=n=>'★'.repeat(n)+'☆'.repeat(5-n);
+  const label={pending:'Waiting for approval',approved:'Shown on website',hidden:'Hidden'};
+  const rows=reviews.map(r=>`<tr>
+    <td><b>${esc(r.name)}</b><br><small class="muted">${esc(r.orderNo)} · ${new Date(r.createdAt).toLocaleDateString('en-MY')}</small></td>
+    <td>${esc(r.productName)}</td>
+    <td style="min-width:280px"><span style="color:#bd9b5b;letter-spacing:2px">${stars(r.rating)}</span>${r.title?'<br><b>'+esc(r.title)+'</b>':''}<br>${esc(r.text)}${r.reply?'<br><small class="muted">Your reply: '+esc(r.reply)+'</small>':''}</td>
+    <td>${esc(label[r.status]||r.status)}</td>
+    <td style="white-space:nowrap">
+      ${r.status!=='approved'?`<button class="btn primary" data-rv-set="approved" data-rv="${esc(r.id)}">Approve</button> `:''}
+      ${r.status!=='hidden'?`<button class="btn" data-rv-set="hidden" data-rv="${esc(r.id)}">Hide</button> `:''}
+      <button class="btn" data-rv-reply="${esc(r.id)}">Reply</button>
+      <button class="btn" data-rv-del="${esc(r.id)}">Delete</button>
+    </td></tr>`).join('');
+  $('#content').innerHTML=`<div class="panel"><div class="panel-head"><div><h3>Customer reviews</h3><small>${reviews.length} total · ${pend} waiting for approval. Only customers with a shipped or delivered order can submit a review.</small></div></div>
+    ${reviews.length?`<div class="table-wrap"><table class="orders"><thead><tr><th>Customer</th><th>Product</th><th>Review</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="empty">No reviews yet. Customers can write one from the product page after their order has shipped.</div>'}</div>`;
+}
+document.addEventListener('click',async e=>{
+  const set=e.target.closest('[data-rv-set]'),rep=e.target.closest('[data-rv-reply]'),del=e.target.closest('[data-rv-del]');
+  if(!set&&!rep&&!del)return;
+  try{
+    if(set){await api('/reviews/'+set.dataset.rv,{method:'PATCH',body:JSON.stringify({status:set.dataset.rvSet})});toast(set.dataset.rvSet==='approved'?'Review is now live on the product page.':'Review hidden.')}
+    else if(rep){const r=reviews.find(x=>x.id===rep.dataset.rvReply),t=prompt('Reply shown under this review (leave empty to remove):',r&&r.reply||'');if(t===null)return;await api('/reviews/'+r.id,{method:'PATCH',body:JSON.stringify({reply:t})});toast('Reply saved.')}
+    else if(del){if(!confirm('Delete this review permanently?'))return;await api('/reviews/'+del.dataset.rvDel,{method:'DELETE'});toast('Review deleted.')}
+    const j=await api('/reviews');reviews=j.reviews||[];drawReviews();
+  }catch(err){toast(err.message)}
+});
