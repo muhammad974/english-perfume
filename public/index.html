@@ -1161,10 +1161,10 @@ const PRODUCTS = [
 ];
 if(window.epMerge)epMerge(PRODUCTS);
 const CATEGORIES = [
-  { key:'men',    title:"Men's Perfumes",     sub:'Bold · Woody · Fresh',   img:U(IMG.k), h:210 },
-  { key:'women',  title:"Women's Perfumes",   sub:'Floral · Soft · Radiant', img:U(IMG.b), h:345 },
-  { key:'unisex', title:'Unisex Fragrances',  sub:'Modern · Balanced',       img:U(IMG.l), h:40 },
-  { key:'luxury', title:'Luxury Collection',  sub:'Rare · Rich · Refined',    img:U(IMG.c), h:36 }
+  { key:'men',    title:"Men's Perfumes",     sub:'Bold · Woody · Fresh',   img:'/images/products/dior-sauvage-elixir-100ml.jpg', h:210 },
+  { key:'women',  title:"Women's Perfumes",   sub:'Floral · Soft · Radiant', img:'/images/products/dior-jadore-edp-100ml.jpg', h:345 },
+  { key:'unisex', title:'Unisex Fragrances',  sub:'Modern · Balanced',       img:'/images/products/tom-ford-oud-wood-edp-100ml.jpg', h:40 },
+  { key:'luxury', title:'Luxury Collection',  sub:'Rare · Rich · Refined',    img:'/images/products/jpg-le-male-elixir-100ml.jpg', h:36 }
 ];
 const STATES = ['Johor','Kedah','Kelantan','Melaka','Negeri Sembilan','Pahang','Perak','Perlis','Pulau Pinang','Sabah','Sarawak','Selangor','Terengganu','Kuala Lumpur','Labuan','Putrajaya'];
 const byId = id => PRODUCTS.find(p => p.id === Number(id));
@@ -1604,13 +1604,13 @@ function initProducts(){
 const H = id => U(id).replace('w=900','w=1800');
 const HERO = [
   { eyebrow:'New Arrivals', title:'Find Your<br><span>Signature Scent.</span>', lead:'Discover your next favourite fragrance.',
-    f:'men', cta:'Shop new arrivals', banner:'images/banner-men.jpg', alt:'Premium Perfumes – Fragrance That Defines You. Shop now', photo:H(IMG.a),
+    f:'men', cta:'Shop new arrivals', banner:'images/banner-men.jpg', alt:'Premium Perfumes – Fragrance That Defines You. Shop now', photo:'/images/products/dior-sauvage-elixir-100ml.jpg',
     c:{bg1:'#f4eadf',bg2:'#dfc9b3',fl1:'#f8f1e9',fl2:'#e6d8c6',mir1:'#7a3b55',mir2:'#3a1a28',leaf:'rgba(70,48,36,.55)',shade:'rgba(244,234,223,.97)',b:{h:32,s:70,l:50,w:170,rx:22}} },
   { eyebrow:"Women's Collection", title:'Soft Florals<br><span>For Every Moment.</span>', lead:'Rose, jasmine and creamy musk, made to be noticed.',
-    f:'women', cta:"Shop women's", banner:'images/banner-women.jpg', alt:'Perfumes For Her – Elegance in Every Spray. Shop now', photo:H(IMG.b),
+    f:'women', cta:"Shop women's", banner:'images/banner-women.jpg', alt:'Perfumes For Her – Elegance in Every Spray. Shop now', photo:'/images/products/dior-jadore-edp-100ml.jpg',
     c:{bg1:'#fbece9',bg2:'#edc9c8',fl1:'#fcf3ef',fl2:'#f0d9d4',mir1:'#e9a9b1',mir2:'#c46f7d',leaf:'rgba(110,55,60,.45)',shade:'rgba(250,236,233,.97)',b:{h:345,s:55,l:62,w:160,rx:60}} },
   { eyebrow:'Luxury Collection', title:'Luxury You Can<br><span>Wear Every Day.</span>', lead:'Rare amber, saffron and sandalwood, from just RM 49.',
-    f:'all', cta:'Shop luxury', banner:'images/banner-collection.jpg', alt:'Discover Our Exclusive Collection – Luxury Fragrances for Every Mood. Shop now', photo:H(IMG.c),
+    f:'all', cta:'Shop luxury', banner:'images/banner-collection.jpg', alt:'Discover Our Exclusive Collection – Luxury Fragrances for Every Mood. Shop now', photo:'/images/products/jpg-le-male-elixir-100ml.jpg',
     c:{bg1:'#eef0ec',bg2:'#cdd8db',fl1:'#f3f5f2',fl2:'#d9e0e0',mir1:'#2c5068',mir2:'#0f2230',leaf:'rgba(25,45,60,.45)',shade:'rgba(237,240,237,.97)',b:{h:40,s:75,l:52,w:150,rx:14}} }
 ];
 const HERO_TRUST = [['fa-truck-fast','Free shipping','Over RM 150'],['fa-money-bill-wave','Cash on delivery','Across Malaysia'],['fa-shield-halved','Secure checkout','Shop with confidence'],['fa-clock','Fast delivery','2–5 working days']];
