@@ -20,17 +20,13 @@
     if (!data) return list;
     var old = new Map(list.map(function (q) { return [q.id, q]; }));
     var out = data.products.filter(function (x) { return x.active !== false; }).map(function (x) {
-      var cl = function (v) { return String(v == null ? '' : v).replace(/[<>]/g, ''); };   // never let stray HTML break a page
-      x = Object.assign({}, x, { name: cl(x.name), label: cl(x.label), description: cl(x.description) });
-      var isNew = !old.has(Number(x.id));
       var o = old.get(Number(x.id)) || {}, pr = Number(x.price) || 0;
       var nt = String(x.label || '').split(/[·,]/).map(function (v) { return v.trim(); }).filter(Boolean);
       var was = ('was' in x) ? (Number(x.was) || pr) : (o.was || pr); if (was < pr) was = pr;
       return {
         id: Number(x.id), name: x.name, brand: 'English Perfume', cat: x.cat || o.cat || 'unisex',
         label: x.label || o.label || '', price: pr, was: was, rating: o.rating || 0, reviews: o.reviews || 0,
-        images: (Array.isArray(x.images) && x.images.length) ? x.images : (o.images || (isNew ? [x.img || ''] : undefined)),
-        best: !!o.best, luxury: !!o.luxury, img: x.img || o.img || '', h: o.h != null ? o.h : (Number(x.id) * 47) % 360,
+        best: !!o.best, luxury: !!o.luxury, img: x.img || o.img || '', images: (x.images && x.images.length) ? x.images.slice() : undefined, h: o.h != null ? o.h : (Number(x.id) * 47) % 360,
         notes: nt.length ? nt : (o.notes || []), desc: x.description || o.desc || x.label || ''
       };
     });
