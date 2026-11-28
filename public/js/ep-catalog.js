@@ -26,7 +26,7 @@
       return {
         id: Number(x.id), name: x.name, brand: 'English Perfume', cat: x.cat || o.cat || 'unisex',
         label: x.label || o.label || '', price: pr, was: was, rating: o.rating || 0, reviews: o.reviews || 0,
-        best: !!o.best, luxury: !!o.luxury, img: x.img || o.img || '', images: (x.images && x.images.length) ? x.images.slice() : undefined, h: o.h != null ? o.h : (Number(x.id) * 47) % 360,
+        best: ('best' in x) ? !!x.best : !!o.best, luxury: ('luxury' in x) ? !!x.luxury : !!o.luxury, img: x.img || o.img || '', h: o.h != null ? o.h : (Number(x.id) * 47) % 360,
         notes: nt.length ? nt : (o.notes || []), desc: x.description || o.desc || x.label || ''
       };
     });
