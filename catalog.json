@@ -93,7 +93,13 @@
       "label": "Fresh Spicy · Citrus · Amber",
       "img": "/images/products/dior-sauvage-edp-100ml.jpg",
       "description": "Dior Sauvage Eau de Parfum for men, 100ml. Fresh and spicy with bergamot, Sichuan pepper, lavender, star anise, vanilla and ambroxan. Strong sillage and around 8 hours of longevity. 100% authentic.",
-      "active": true
+      "active": true,
+      "images": [
+        "/images/products/dior-sauvage-edp-100ml.jpg",
+        "/images/products/11-2.jpg",
+        "/images/products/11-3.jpg",
+        "/images/products/11-4.jpg"
+      ]
     }
   ]
 }

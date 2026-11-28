@@ -65,13 +65,6 @@ let ADMIN = null;
 async function getAdmin(interactive) {
   let a = await store.get('admin');
   if (!a && (process.env.ADMIN_PASSWORD || interactive)) a = await createAdmin();
-  // ADMIN_SYNC=1: force the saved login to match ADMIN_USER / ADMIN_PASSWORD from the environment (use once, then remove it)
-  if (process.env.ADMIN_SYNC === '1' && process.env.ADMIN_PASSWORD) {
-    const u = process.env.ADMIN_USER || 'admin';
-    let same = false;
-    try { same = !!a && a.user === u && checkPw(process.env.ADMIN_PASSWORD, a.hash); } catch {}
-    if (!same) { a = { user: u, hash: hashPw(process.env.ADMIN_PASSWORD) }; await store.set('admin', a); }
-  }
   ADMIN = a; return a;
 }
 const ask = q => new Promise(resolve => {
@@ -292,10 +285,11 @@ app.post('/api/track', async (req, res) => {
 
 /* ===== ADMIN PRODUCT MANAGEMENT (authenticated) ===== */
 app.get('/api/admin/products', auth, async (req,res)=>{ await loadCatalog(true); res.json({products:CATALOG.products, config:CATALOG.config}); });
+const cleanImages = a => (Array.isArray(a) ? a : []).map(u => str(u, 2000)).filter(u => /^(\/|https?:\/\/|images\/)/.test(u)).slice(0, 8);
 app.post('/api/admin/products', auth, async (req,res)=>{await loadCatalog(true);
   const b=req.body||{}; const name=str(b.name,120); const price=Number(b.price), id=Math.max(0,...CATALOG.products.map(p=>Number(p.id)||0))+1;
   if(name.length<2 || !Number.isFinite(price) || price<0) return res.status(400).json({error:'Product name and valid price are required.'});
-  const p={id,name,price,cat:['men','women','unisex'].includes(b.cat)?b.cat:'unisex',label:str(b.label,100),img:str(b.img,2000),was:Number(b.was)||0,active:b.active!==false,stock:Math.max(0,Math.floor(Number(b.stock)||0)),sku:str(b.sku,40),description:str(b.description,1000)};
+  const p={id,name,price,cat:['men','women','unisex'].includes(b.cat)?b.cat:'unisex',label:str(b.label,100),img:cleanImages(b.images)[0]||str(b.img,2000),images:cleanImages(b.images),was:Number(b.was)||0,active:b.active!==false,stock:Math.max(0,Math.floor(Number(b.stock)||0)),sku:str(b.sku,40),description:str(b.description,1000)};
   CATALOG.products.push(p); await persistCatalog(); res.status(201).json({product:p});
 });
 app.put('/api/admin/products/:id', auth, async (req,res)=>{await loadCatalog(true);
@@ -305,6 +299,7 @@ app.put('/api/admin/products/:id', auth, async (req,res)=>{await loadCatalog(tru
   if(b.cat!==undefined)p.cat=['men','women','unisex'].includes(b.cat)?b.cat:'unisex';
   if(b.was!==undefined)p.was=Math.max(0,Number(b.was)||0);
   for(const k of ['label','img','sku','description'])if(b[k]!==undefined)p[k]=str(b[k], k==='img'?2000:k==='description'?1000:120);
+  if(b.images!==undefined){p.images=cleanImages(b.images);p.img=p.images[0]||'';}
   if(b.active!==undefined)p.active=!!b.active;if(b.stock!==undefined)p.stock=Math.max(0,Math.floor(Number(b.stock)||0));
   await persistCatalog();res.json({product:p});
 });
@@ -326,7 +321,8 @@ app.post('/api/admin/login', async (req, res) => {
   const A = await getAdmin();
   if (!A) return res.status(503).json({ error: 'Admin is not set up yet. Add ADMIN_PASSWORD in the Vercel environment variables and redeploy.' });
   const pwOk = checkPw(typeof password === 'string' ? password : '', A.hash);
-  if (!(typeof user === 'string' && user === A.user && pwOk)) return res.status(401).json({ error: 'Wrong username or password.' });
+  const same = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+  if (!(typeof user === 'string' && same(user, A.user) && pwOk)) return res.status(401).json({ error: 'Wrong username or password.' });
   setSession(req, res, A);
   res.json({ ok: true, user });
 });
@@ -342,7 +338,8 @@ app.post('/api/admin/reset', async (req, res) => {
   const h = v => crypto.createHash('sha256').update(String(v)).digest();
   if (typeof key !== 'string' || !crypto.timingSafeEqual(h(key), h(rk))) return res.status(401).json({ error: 'Wrong recovery key.' });
   if (typeof next !== 'string' || next.length < 8) return res.status(400).json({ error: 'New password must be at least 8 characters.' });
-  const A = (await getAdmin()) || { user: process.env.ADMIN_USER || 'admin' };
+  const A = (await getAdmin()) || { user: 'admin' };
+  if (process.env.ADMIN_USER && process.env.ADMIN_USER.trim()) A.user = process.env.ADMIN_USER.trim();
   A.hash = hashPw(next);
   await store.set('admin', A); // old login cookies stop working automatically
   res.json({ ok: true, user: A.user });
@@ -433,7 +430,7 @@ app.get('/api/health', async (req, res) => {
       SESSION_SECRET: has('SESSION_SECRET'), ADMIN_RECOVERY_KEY: has('ADMIN_RECOVERY_KEY')
     }
   };
-  try { await store.set('health', { at: new Date().toISOString() }); out.database = 'working'; out.adminAccountCreated = !!(await store.get('admin')); const ol = await store.hall('orders'); out.ordersInDatabase = ol.length; out.lastOrderNo = ol.map(o => o.orderNo).sort().pop() || null; }
+  try { await store.set('health', { at: new Date().toISOString() }); out.database = 'working'; out.adminAccountCreated = !!(await store.get('admin')); }
   catch (e) { out.database = 'NOT working: ' + store.safeMsg(e); }
   res.set('Cache-Control', 'no-store').json(out);
 });
