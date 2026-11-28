@@ -294,11 +294,14 @@ app.post('/api/track', async (req, res) => {
 });
 
 /* ===== ADMIN PRODUCT MANAGEMENT (authenticated) ===== */
+const cleanImgs=a=>Array.isArray(a)?a.map(u=>str(u,2000)).filter(u=>/^(\/|https?:\/\/)/.test(u)).slice(0,8):[];
+
 app.get('/api/admin/products', auth, async (req,res)=>{ await loadCatalog(true); res.json({products:CATALOG.products, config:CATALOG.config}); });
 app.post('/api/admin/products', auth, async (req,res)=>{await loadCatalog(true);
   const b=req.body||{}; const name=str(b.name,120); const price=Number(b.price), id=Math.max(0,...CATALOG.products.map(p=>Number(p.id)||0))+1;
   if(name.length<2 || !Number.isFinite(price) || price<0) return res.status(400).json({error:'Product name and valid price are required.'});
   const p={id,name,price,cat:['men','women','unisex'].includes(b.cat)?b.cat:'unisex',label:str(b.label,100),img:str(b.img,2000),was:Number(b.was)||0,active:b.active!==false,stock:Math.max(0,Math.floor(Number(b.stock)||0)),sku:str(b.sku,40),description:str(b.description,1000),best:!!b.best,luxury:!!b.luxury};
+  { const im=cleanImgs(b.images); if(im.length){p.images=im;p.img=im[0];} }
   CATALOG.products.push(p); await persistCatalog(); res.status(201).json({product:p});
 });
 app.put('/api/admin/products/:id', auth, async (req,res)=>{await loadCatalog(true);
@@ -308,7 +311,7 @@ app.put('/api/admin/products/:id', auth, async (req,res)=>{await loadCatalog(tru
   if(b.cat!==undefined)p.cat=['men','women','unisex'].includes(b.cat)?b.cat:'unisex';
   if(b.was!==undefined)p.was=Math.max(0,Number(b.was)||0);
   for(const k of ['label','img','sku','description'])if(b[k]!==undefined)p[k]=str(b[k], k==='img'?2000:k==='description'?1000:120);
-  if(b.active!==undefined)p.active=!!b.active;if(b.best!==undefined)p.best=!!b.best;if(b.luxury!==undefined)p.luxury=!!b.luxury;if(b.stock!==undefined)p.stock=Math.max(0,Math.floor(Number(b.stock)||0));
+  if(b.active!==undefined)p.active=!!b.active;if(b.images!==undefined){const im=cleanImgs(b.images); if(im.length){p.images=im;p.img=im[0];} else {delete p.images;p.img='';}} if(b.best!==undefined)p.best=!!b.best;if(b.luxury!==undefined)p.luxury=!!b.luxury;if(b.stock!==undefined)p.stock=Math.max(0,Math.floor(Number(b.stock)||0));
   await persistCatalog();res.json({product:p});
 });
 app.delete('/api/admin/products/:id', auth, async (req,res)=>{await loadCatalog(true);const id=Number(req.params.id);if(!PRODUCTS.has(id))return res.status(404).json({error:'Product not found'});CATALOG.products=CATALOG.products.filter(p=>Number(p.id)!==id);await persistCatalog();res.json({ok:true});});
